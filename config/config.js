@@ -24,12 +24,12 @@ c.version = require('../package.json').version;
 c.api_version = 1;
 
 // network & database
-c.net.port         = env.CONTENTBUTLER_PORT || 8081;
-c.mongo.location   = env.CONTENTBUTLER_MONGODB || 'mongodb://localhost/';
-c.mongo.database = env.CONTENTBUTLER_MONGODB_DATABASE || 'muncher';
-c.mongo.inital_connection_attempts = 30;
-c.mongo.inital_connection_max_delay = 5000;
-c.mongo.inital_connection_initial_delay = 1000;
+c.net.port         = env.TRANSPORTER_PORT || 8081;
+c.mongo.location   = env.TRANSPORTER_MONGODB || 'mongodb://localhost/';
+c.mongo.database = env.TRANSPORTER_MONGODB_DATABASE || 'muncher';
+c.mongo.initial_connection_attempts = 30;
+c.mongo.initial_connection_max_delay = 5000;
+c.mongo.initial_connection_initial_delay = 1000;
 
 // fix mongo location if trailing slash was omitted
 if (c.mongo.location[c.mongo.location.length-1] !== '/') {
@@ -37,7 +37,7 @@ if (c.mongo.location[c.mongo.location.length-1] !== '/') {
 }
 
 // fs paths
-c.fs.base       = env.CONTENTBUTLER_BASEPATH || '/tmp/o2r/';
+c.fs.base       = env.TRANSPORTER_BASEPATH || '/tmp/o2r/';
 c.fs.incoming   = c.fs.base + 'incoming/';
 c.fs.compendium = c.fs.base + 'compendium/';
 c.fs.job        = c.fs.base + 'job/';

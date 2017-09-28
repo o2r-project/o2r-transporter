@@ -16,7 +16,7 @@
  */
 
 const config = require('./config/config');
-const debug = require('debug')('contentbutler');
+const debug = require('debug')('transporter');
 const mongoose = require('mongoose');
 const backoff = require('backoff');
 
@@ -120,7 +120,7 @@ function initApp(callback) {
       }
 
       var response = {
-        service: "contentbutler",
+        service: "transporter",
         version: config.version,
         levels: config.user.level,
         mongodb: config.mongo,
@@ -130,7 +130,7 @@ function initApp(callback) {
     });
 
     app.listen(config.net.port, () => {
-      debug('contentbutler %s with API version %s waiting for requests on port %s and serving data from %s',
+      debug('transporter %s with API version %s waiting for requests on port %s and serving data from %s',
         config.version,
         config.api_version,
         config.net.port,
@@ -148,11 +148,11 @@ function initApp(callback) {
 // auto_reconnect is on by default and only for RE(!)connects, not for the initial attempt: http://bites.goodeggs.com/posts/reconnecting-to-mongodb-when-mongoose-connect-fails-at-startup/
 var dbBackoff = backoff.fibonacci({
   randomisationFactor: 0,
-  initialDelay: config.mongo.inital_connection_initial_delay,
-  maxDelay: config.mongo.inital_connection_max_delay
+  initialDelay: config.mongo.initial_connection_initial_delay,
+  maxDelay: config.mongo.initial_connection_max_delay
 });
 
-dbBackoff.failAfter(config.mongo.inital_connection_attempts);
+dbBackoff.failAfter(config.mongo.initial_connection_attempts);
 dbBackoff.on('backoff', function (number, delay) {
   debug('Trying to connect to MongoDB (#%s) in %sms', number, delay);
 });

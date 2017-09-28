@@ -16,7 +16,7 @@
  */
 // General modules
 const config = require('../config/config');
-const debug = require('debug')('contentbutler:compendium');
+const debug = require('debug')('transporter:compendium');
 const fs = require('fs');
 const Compendium = require('../lib/model/compendium');
 

@@ -19,21 +19,20 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" > /etc/apk/reposito
   && echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories
 
 RUN apk add --no-cache \
-    git \
     nodejs \
     dumb-init \
     nodejs-npm \
     imagemagick \
-    ca-certificates \
-  && git clone --depth 1 -b master https://github.com/o2r-project/o2r-contentbutler /contentbutler
-
-WORKDIR /contentbutler
-RUN npm install --production
-
-RUN apk del \
-    git \
-    ca-certificates \
   && rm -rf /var/cache
+
+WORKDIR /transporter
+COPY package.json package.json
+COPY index.js index.js
+COPY controllers/ controllers/
+COPY lib/ lib/
+COPY config/ config/
+
+RUN npm install --production
 
 # Metadata params provided with docker build command
 ARG VERSION=dev
@@ -46,8 +45,8 @@ ARG META_VERSION
 LABEL maintainer="o2r-project <https://o2r.info>" \
   org.label-schema.vendor="o2r project" \
   org.label-schema.url="http://o2r.info" \
-  org.label-schema.name="o2r contentbutler" \
-  org.label-schema.description="ERC content delivery" \    
+  org.label-schema.name="o2r transporter" \
+  org.label-schema.description="Partial and complete content delivery for compendia" \    
   org.label-schema.version=$VERSION \
   org.label-schema.vcs-url=$VCS_URL \
   org.label-schema.vcs-ref=$VCS_REF \
