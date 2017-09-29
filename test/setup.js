@@ -96,7 +96,7 @@ loadTestData = function (done) {
     });
 
     sleep.sleep(3);
-    console.log('Loaded test data into ' + dbPath);
+    console.log('Loaded test data into ' + dbPath + '\n\n');
     done();
 }
 

@@ -146,7 +146,7 @@ exports.downloadZip = (req, res) => {
     includeImage = (req.query.image === "true");
   }
   let id = req.params.id;
-  let originalUrl = req.protocol + '://' + req.hostname + req.path;
+  let originalUrl = req.protocol + '://' + ':' + req.port + '/' + req.hostname + req.path;
   debug('Download zip archive for %s (image? %s) with original request %s', id, includeImage, originalUrl);
 
   Compendium.findOne({ id }).select('id').exec((err, compendium) => {
@@ -213,7 +213,7 @@ exports.downloadZip = (req, res) => {
       } catch (e) {
         debug(e);
         res.setHeader('Content-Type', 'application/json');
-        res.status(500).send({ error: 'internal error', e: e });
+        res.status(500).send({ error: e.message });
         timer.stop();
         return;
       }
@@ -232,14 +232,15 @@ exports.downloadTar = (req, res) => {
   if (req.query.gzip !== undefined) {
     gzip = true;
   }
-  debug('Download zip archive for %s (image? %s gzip? %s) with original request %s', id, includeImage, gzip);
+  let originalUrl = req.protocol + '://' + ':' + req.port + '/' + req.hostname + req.path;
+  debug('Download zip archive for %s (image? %s gzip? %s) with original request %s', id, includeImage, gzip, originalUrl);
 
   Compendium.findOne({ id }).select('id').exec((err, compendium) => {
     if (err || compendium == null) {
       res.setHeader('Content-Type', 'application/json');
       res.status(404).send({ error: 'no compendium with this id' });
     } else {
-      let localPath = config.fs.compendium + id;
+      let localPath = path.join(config.fs.compendium, id);
 
       let timer = new Timer();
       timer.start();
@@ -269,7 +270,6 @@ exports.downloadTar = (req, res) => {
         let filename = id + '.tar';
         if (gzip) {
           filename = filename + '.gz';
-          //res.setHeader('Content-Type', 'application/gzip'); // archiver correctly sets to 'application/x-tar' if not gzipped
         }
         res.attachment(filename);
 
@@ -284,7 +284,9 @@ exports.downloadTar = (req, res) => {
             saveImage(stream, id, res, (err) => {
               if (err) {
                 debug('Error saving image for %s: %s', id, JSON.stringify(err));
-                res.status(500).send({ error: 'internal error', err: err });
+                res.setHeader('Content-Type', 'application/json');
+                res.status(500).send({ error: err.message });
+                timer.stop();
                 return;
               }
               debug('Image saved for %s', id);
@@ -304,10 +306,9 @@ exports.downloadTar = (req, res) => {
       } catch (e) {
         debug(e);
         res.setHeader('Content-Type', 'application/json');
-        res.status(500).send({ error: 'internal error', e: e });
-        return;
-      } finally {
+        res.status(500).send({ error: e.message });
         timer.stop();
+        return;
       }
     }
   });

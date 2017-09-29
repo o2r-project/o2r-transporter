@@ -37,9 +37,9 @@ const config = require('../config/config');
 require("./setup");
 const cookie = 's:C0LIrsxGtHOGHld8Nv2jedjL4evGgEHo.GMsWD5Vveq0vBt7/4rGeoH5Xx7Dd2pgZR9DvhKCyDTY';
 
-var secs = 10;
+var secs = 20;
 
-describe('Docker image download', function () {
+describe.only('Image download', function () {
     let compendium_id = null;
 
     before(function (done) {
@@ -63,7 +63,7 @@ describe('Docker image download', function () {
 
     describe('downloading a compendium', function () {
 
-        it('should contain a tarball of Docker image in zip archive by default', (done) => {
+        it.only('should contain a tarball of Docker image in zip archive by default', (done) => {
             let tmpfile = tmp.tmpNameSync() + '.zip';
             let url = global.test_host + '/api/v1/compendium/' + compendium_id + '.zip';
             request.get(url)
@@ -79,6 +79,7 @@ describe('Docker image download', function () {
                     zipEntries.forEach(function (entry) {
                         filenames.push(entry.entryName);
                     });
+                    console.log(filenames);
 
                     assert.oneOf('bagit.txt', filenames);
                     assert.oneOf('data/image.tar', filenames);

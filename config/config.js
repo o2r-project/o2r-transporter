@@ -37,11 +37,12 @@ if (c.mongo.location[c.mongo.location.length-1] !== '/') {
 }
 
 // fs paths
-c.fs.base       = env.TRANSPORTER_BASEPATH || '/tmp/o2r/';
-c.fs.incoming   = c.fs.base + 'incoming/';
-c.fs.compendium = c.fs.base + 'compendium/';
-c.fs.job        = c.fs.base + 'job/';
-c.fs.tmp     = c.fs.base + 'imgtmp/';
+const path = require('path');
+c.fs.base = env.TRANSPORTER_BASEPATH || '/tmp/o2r';
+c.fs.incoming = path.join(c.fs.base, 'incoming');
+c.fs.compendium = path.join(c.fs.base, 'compendium');
+c.fs.job = path.join(c.fs.base, 'job');
+c.fs.tmp = path.join(c.fs.base, 'imgtmp');
 c.fs.delete_inc = true;
 c.id_length = 5;
 

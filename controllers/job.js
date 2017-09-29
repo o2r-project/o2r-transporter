@@ -18,22 +18,22 @@
 const c = require('../config/config');
 const debug = require('debug')('compendium');
 const fs = require('fs');
-const Job = require('../lib/model/job');
+const path = require('path');
 
+const Job = require('../lib/model/job');
 const resize = require('../lib/resize.js').resize;
 
 exports.viewPath = (req, res) => {
-  let path = req.params.path;
-  debug(path);
+  debug('View job path %s', req.params.path);
   let size = req.query.size || null;
   let id = req.params.id;
   Job.findOne({id}).select('id').exec((err, job) => {
     if (err || job == null) {
       res.status(404).send({error: 'no job with this id'});
     } else {
-      let localPath = c.fs.job + id + '/' + path;
+      let localPath = path.join(c.fs.job, id, req.params.path);
       try {
-        debug(localPath);
+        debug('Accessing %s', localPath);
         fs.accessSync(localPath); //throws if does not exist
         if(size) {
           resize(localPath, size, (finalPath, err) => {
@@ -42,7 +42,7 @@ exports.viewPath = (req, res) => {
               res.status(status).send({ error: err});
               return;
             }
-            debug('returned ' + finalPath);
+            debug('Returned %s', finalPath);
             res.sendFile(finalPath);
           });
         } else {
@@ -50,7 +50,8 @@ exports.viewPath = (req, res) => {
         }
       } catch (e) {
         debug(e);
-        res.status(500).send({ error: 'internal error', e});
+        res.setHeader('Content-Type', 'application/json');
+        res.status(500).send({ error: e.message });
         return;
       }
     }
