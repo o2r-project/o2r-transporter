@@ -105,14 +105,16 @@ function initApp(callback) {
     /*
      * check Docker availability
      */
-    let Docker = require('dockerode');
-    let docker = new Docker();
+    Docker = require('dockerode');
+    docker = new Docker();
     docker.ping((err, data) => {
       if(err) {
         debug('Error pinging Docker: %s', err);
         throw err;
       } else {
         debug('Docker available? %s', data);
+        delete docker;
+        delete Docker;
       }
     });
 

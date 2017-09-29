@@ -39,7 +39,7 @@ const cookie = 's:C0LIrsxGtHOGHld8Nv2jedjL4evGgEHo.GMsWD5Vveq0vBt7/4rGeoH5Xx7Dd2
 
 var secs = 20;
 
-describe.only('Image download', function () {
+describe('Image download', function () {
     let compendium_id = null;
 
     before(function (done) {
@@ -63,7 +63,7 @@ describe.only('Image download', function () {
 
     describe('downloading a compendium', function () {
 
-        it.only('should contain a tarball of Docker image in zip archive by default', (done) => {
+        it('should contain a tarball of Docker image in zip archive by default', (done) => {
             let tmpfile = tmp.tmpNameSync() + '.zip';
             let url = global.test_host + '/api/v1/compendium/' + compendium_id + '.zip';
             request.get(url)
