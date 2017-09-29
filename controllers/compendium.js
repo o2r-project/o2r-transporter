@@ -26,22 +26,22 @@ const dirTree = require('directory-tree');
 const rewriteTree = require('../lib/rewrite-tree');
 
 exports.viewPath = (req, res) => {
-  var path = req.params.path;
+  let path = req.params.path;
   debug('view path %s', path);
-  var size = req.query.size || null;
-  var id = req.params.id;
+  let size = req.query.size || null;
+  let id = req.params.id;
   Compendium.findOne({ id }).select('id').exec((err, compendium) => {
     if (err || compendium == null) {
       res.status(404).send({ error: 'no compendium with this id' });
     } else {
-      var localpath = config.fs.compendium + id + '/' + path;
+      let localpath = config.fs.compendium + id + '/' + path;
       try {
         debug(localpath);
         fs.accessSync(localpath); //throws if does not exist
         if (size) {
           resize(localpath, size, (finalpath, err, code) => {
             if (err) {
-              var status = code || 500;
+              let status = code || 500;
               res.status(status).send({ error: err });
               return;
             }
@@ -61,12 +61,12 @@ exports.viewPath = (req, res) => {
 };
 
 exports.viewData = (req, res) => {
-  var id = req.params.id;
+  let id = req.params.id;
   Compendium.findOne({ id }).select('id').exec((err, compendium) => {
     if (err || compendium == null) {
       res.status(404).send({ error: 'no compendium with this id' });
     } else {
-      var localpath = config.fs.compendium + id + '/';
+      let localpath = config.fs.compendium + id + '/';
       try {
         debug('Reading file listing from %s', localpath);
         fs.accessSync(localpath); //throws if does not exist

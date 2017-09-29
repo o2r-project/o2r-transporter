@@ -19,6 +19,7 @@ const config = require('./config/config');
 const debug = require('debug')('transporter');
 const mongoose = require('mongoose');
 const backoff = require('backoff');
+const url = require('url');
 
 // check fs & create dirs if necessary
 const fse = require('fs-extra');
@@ -39,30 +40,21 @@ mongoose.connection.on('error', (err) => {
 const compression = require('compression');
 const express = require('express');
 const app = express();
-app.use(compression());
+const responseTime = require('response-time');
 
 app.use((req, res, next) => {
-  debug(req.method + ' ' + req.path);
+  debug('%s %s', req.method, req.path);
   next();
 });
+app.use(compression());
+app.use(responseTime());
 
-// Passport & session modules for authenticating users.
-var User = require('./lib/model/user');
-var passport = require('passport');
-var session = require('express-session');
-var MongoDBStore = require('connect-mongodb-session')(session);
-
-// load controllers
-var controllers = {};
-controllers.compendium = require('./controllers/compendium');
-controllers.job = require('./controllers/job');
-
-/*
- *  Authentication & Authorization
- *  This is be needed in every service that wants to check if a user is authenticated.
- */
-
-// minimal serialize/deserialize to make authdetails cookie-compatible.
+// Passport & session modules for authenticating users
+const User = require('./lib/model/user');
+const passport = require('passport');
+const session = require('express-session');
+const MongoDBStore = require('connect-mongodb-session')(session);
+// minimal serialize/deserialize to make auth details cookie-compatible.
 passport.serializeUser((user, cb) => {
   cb(null, user.orcid);
 });
@@ -74,16 +66,21 @@ passport.deserializeUser((id, cb) => {
   });
 });
 
+// load controllers
+const controllers = {};
+controllers.compendium = require('./controllers/compendium');
+controllers.job = require('./controllers/job');
+controllers.download = require('./controllers/download');
 
 function initApp(callback) {
   debug('Initialize application');
 
   try {
-    // configure express-session, stores reference to authdetails in cookie.
-    // authdetails themselves are stored in MongoDBStore
-    var mongoStore = new MongoDBStore({
+    // configure express-session, stores reference to auth details in cookie.
+    // auth details themselves are stored in MongoDBStore
+    let mongoStore = new MongoDBStore({
       uri: dbURI,
-      collepathction: 'sessions'
+      collection: 'sessions'
     }, err => {
       if (err) {
         debug('Error starting MongoStore: %s', err);
@@ -108,18 +105,32 @@ function initApp(callback) {
     /*
      * configure routes
      */
+    app.get('/api/v1/job/:id/data/:path(*)', controllers.job.viewPath);
     app.get('/api/v1/compendium/:id/data/', controllers.compendium.viewData);
     app.get('/api/v1/compendium/:id/data/:path(*)', controllers.compendium.viewPath);
-    app.get('/api/v1/job/:id/data/:path(*)', controllers.job.viewPath);
+    app.get('/api/v1/compendium/:id.zip', controllers.download.downloadZip);
+    app.get('/api/v1/compendium/:id.tar', controllers.download.downloadTar);
+    app.get('/api/v1/compendium/:id.tar.gz', function (req, res) {
+      let redirectUrl = req.path.replace('.tar.gz', '.tar?gzip');
+      if (Object.keys(req.query).length !== 0) {
+        redirectUrl += '&' + url.parse(req.url).query;
+      }
+      debug('Redirecting from %s with query %s  to  %s', req.path, JSON.stringify(req.query), redirectUrl)
+      res.redirect(redirectUrl);
+    });
 
     app.get('/status', function (req, res) {
       res.setHeader('Content-Type', 'application/json');
-      if (!req.isAuthenticated() || req.user.level < config.user.level.view_status) {
-        res.status(401).send('{"error":"not authenticated or not allowed"}');
+      if (!req.isAuthenticated()) {
+        res.status(401).send('{"error":"not authenticated"}');
+        return;
+      }
+      if (req.user.level < config.user.level.view_status) {
+        res.status(403).send('{"error":"not allowed"}');
         return;
       }
 
-      var response = {
+      let response = {
         service: "transporter",
         version: config.version,
         levels: config.user.level,
@@ -137,16 +148,16 @@ function initApp(callback) {
         config.fs.base);
     });
 
+    callback(null);
   } catch (err) {
     callback(err);
   }
-
-  callback(null);
 }
 
 
-// auto_reconnect is on by default and only for RE(!)connects, not for the initial attempt: http://bites.goodeggs.com/posts/reconnecting-to-mongodb-when-mongoose-connect-fails-at-startup/
-var dbBackoff = backoff.fibonacci({
+// auto_reconnect is on by default and only for RE(!)connects, not for the initial attempt:
+// http://bites.goodeggs.com/posts/reconnecting-to-mongodb-when-mongoose-connect-fails-at-startup/
+const dbBackoff = backoff.fibonacci({
   randomisationFactor: 0,
   initialDelay: config.mongo.initial_connection_initial_delay,
   maxDelay: config.mongo.initial_connection_max_delay

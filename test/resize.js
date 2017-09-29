@@ -25,16 +25,17 @@ const fse = require('fs-extra');
 
 const resize = require('../lib/resize');
 
-describe('lib/resize', () => {
-  describe('hashName', () => {
+describe('sub-setting of payload files', () => {
+
+  describe('internal library function hashName', () => {
     it('should compute matching hash', () => {
-      var compareHash = '1f6f8417f0fafc43815e166a7cb041af13ba1ca3982c55cd56de1aa685cd84b5';
-      var computeHash = resize.hashName('filepath', '42');
+      let compareHash = '1f6f8417f0fafc43815e166a7cb041af13ba1ca3982c55cd56de1aa685cd84b5';
+      let computeHash = resize.hashName('filepath', '42');
       assert.equal(compareHash, computeHash, 'hashes not equal');
     });
   });
 
-  describe('truncateText', () => {
+  describe('internal library function truncateText', () => {
     function countFileLines(filePath) {
       return new Promise((resolve, reject) => {
         let lineCount = 0;
@@ -50,10 +51,10 @@ describe('lib/resize', () => {
       });
     };
 
-    var fs_tmp = config.fs.tmp;
+    let fs_tmp = config.fs.tmp;
 
     before(done => {
-      var tmpdir = tmp.dirSync();
+      let tmpdir = tmp.dirSync();
       config.fs.tmp = tmpdir.name + '/';
       fse.mkdirsSync(config.fs.tmp);
       done();
@@ -126,7 +127,8 @@ describe('lib/resize', () => {
     });
   });
 
-  describe('resizeImage', () => {
+
+  describe('internal library function resizeImage', () => {
     it('should reject non-integer sizes', () => {
       resize.resizeImage(null, 'non-integer', null, (file, err, code) => {
         assert.deepEqual(null, file, 'should not return filename');
@@ -135,4 +137,9 @@ describe('lib/resize', () => {
       });
     });
   });
+
+  describe('sub-setting of payload files via API', () => {
+    // TODO implement
+  });
+
 });

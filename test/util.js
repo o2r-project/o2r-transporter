@@ -20,14 +20,16 @@ const tmp = require('tmp');
 const AdmZip = require('adm-zip');
 const fs = require('fs');
 
-function createCompendiumPostRequest(path, cookie) {
-  var zip = new AdmZip();
+const cookie_plain = 's:yleQfdYnkh-sbj9Ez--_TWHVhXeXNEgq.qRmINNdkRuJ+iHGg5woRa9ydziuJ+DzFG9GnAZRvaaM';
+
+module.exports.createCompendiumPostRequest = function createCompendiumPostRequest(path, cookie) {
+  let zip = new AdmZip();
   zip.addLocalFolder(path);
-  var tmpfile = tmp.tmpNameSync() + '.zip';
+  let tmpfile = tmp.tmpNameSync() + '.zip';
   zip.writeZip(tmpfile);
 
   let formData = {
-    'content_type': 'compendium_v1',
+    'content_type': 'compendium',
     'compendium': {
       value: fs.createReadStream(tmpfile),
       options: {
@@ -51,4 +53,55 @@ function createCompendiumPostRequest(path, cookie) {
   return (reqParams);
 }
 
-module.exports.createCompendiumPostRequest = createCompendiumPostRequest;
+// publish a candidate with a direct copy of the metadata
+module.exports.publishCandidate = function (compendium_id, cookie, done) {
+  let j = request.jar();
+  let ck = request.cookie('connect.sid=' + cookie);
+  j.setCookie(ck, global.test_host);
+
+  let getMetadata = {
+    uri: global.test_host_publish + '/api/v1/compendium/' + compendium_id,
+    method: 'GET',
+    jar: j,
+    timeout: 10000
+  };
+
+  let updateMetadata = {
+    uri: global.test_host_publish + '/api/v1/compendium/' + compendium_id + '/metadata',
+    method: 'PUT',
+    jar: j,
+    timeout: 10000
+  };
+
+  request(getMetadata, (err, res, body) => {
+    if (err) {
+      console.error('error publishing candidate: %s', err);
+    } else {
+      let response = JSON.parse(body);
+      updateMetadata.json = { o2r: response.metadata.o2r };
+
+      request(updateMetadata, (err, res, body) => {
+        done();
+      });
+    }
+  });
+}
+
+module.exports.startJob = function (compendium_id, done) {
+  let j = request.jar();
+  let ck = request.cookie('connect.sid=' + cookie_plain);
+  j.setCookie(ck, global.test_host_publish);
+
+  request({
+    uri: global.test_host_publish + '/api/v1/job',
+    method: 'POST',
+    jar: j,
+    formData: {
+      compendium_id: compendium_id
+    },
+    timeout: 1000
+  }, (err, res, body) => {
+    let response = JSON.parse(body);
+    done(response.job_id);
+  });
+}

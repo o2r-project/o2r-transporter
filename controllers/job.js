@@ -15,38 +15,38 @@
  *
  */
 // General modules
-var c = require('../config/config');
-var debug = require('debug')('compendium');
-var fs = require('fs');
-var Job = require('../lib/model/job');
+const c = require('../config/config');
+const debug = require('debug')('compendium');
+const fs = require('fs');
+const Job = require('../lib/model/job');
 
-var resize = require('../lib/resize.js').resize;
+const resize = require('../lib/resize.js').resize;
 
 exports.viewPath = (req, res) => {
-  var path = req.params.path;
+  let path = req.params.path;
   debug(path);
-  var size = req.query.size || null;
-  var id = req.params.id;
+  let size = req.query.size || null;
+  let id = req.params.id;
   Job.findOne({id}).select('id').exec((err, job) => {
     if (err || job == null) {
       res.status(404).send({error: 'no job with this id'});
     } else {
-      var localpath = c.fs.job + id + '/' + path;
+      let localPath = c.fs.job + id + '/' + path;
       try {
-        debug(localpath);
-        fs.accessSync(localpath); //throws if does not exist
+        debug(localPath);
+        fs.accessSync(localPath); //throws if does not exist
         if(size) {
-          resize(localpath, size, (finalpath, err) => {
+          resize(localPath, size, (finalPath, err) => {
             if (err) {
-              var status = code || 500;
+              let status = code || 500;
               res.status(status).send({ error: err});
               return;
             }
-            debug('returned ' + finalpath);
-            res.sendFile(finalpath);
+            debug('returned ' + finalPath);
+            res.sendFile(finalPath);
           });
         } else {
-          res.sendFile(localpath);
+          res.sendFile(localPath);
         }
       } catch (e) {
         debug(e);

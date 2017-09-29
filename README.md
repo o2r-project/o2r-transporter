@@ -56,8 +56,12 @@ docker run -it --rm -p 8081:8081 o2rproject/o2r-transporter
 ```bash
 npm install -g mocha
 
-# TODO start required Docker containers?
+# start required other services:
+# - MongoDB      at port 27017
+# - o2r-loader   at port 8088 (for loading compendia)
+# - o2r-muncher  at port 8080 (for publishing compendia)
 
+npm start
 npm test
 ```
 

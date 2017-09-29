@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017 o2r-project.
+ * (C) Copyright 2017 o2r-project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ var c = {};
 c.net = {};
 c.mongo = {};
 c.fs = {};
-var env = process.env;
+const env = process.env;
 
 c.version = require('../package.json').version;
 c.api_version = 1;
@@ -52,5 +52,16 @@ c.sessionsecret = env.SESSION_SECRET || 'o2r';
 c.user = {};
 c.user.level = {};
 c.user.level.view_status = 500;
+
+c.download = {};
+c.download.defaults = {};
+c.download.defaults.statConcurrency = 4; // archiver.js default is '4'
+c.download.defaults.tar = {};
+c.download.defaults.tar.gzipOptions = {}; // https://nodejs.org/api/zlib.html#zlib_class_options
+c.download.defaults.includeImage = true;
+
+c.compendium = {};
+c.compendium.imageNamePrefix = 'erc:';
+c.compendium.imageTarballFile = 'data/image.tar';
 
 module.exports = c;

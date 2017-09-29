@@ -1,11 +1,11 @@
 {
   "name": "o2r-transporter",
-  "version": "0.3.0",
-  "description": "Node.js implementation of the `/api/v1/compendium/:id/data` and `/api/v1/job/:id/data` resources in the [o2r web api](http://o2r.info/o2r-web-api).",
+  "version": "0.4.0",
+  "description": "Node.js implementation of file access endpoints in the [o2r web api](http://o2r.info/o2r-web-api).",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "startlog": "DEBUG=* node index.js",
+    "start_log": "DEBUG=* node index.js",
     "debug": "DEBUG=* node debug index.js",
     "test": "mocha"
   },
@@ -20,10 +20,12 @@
   },
   "homepage": "https://github.com/o2r-project/o2r-transporter#readme",
   "dependencies": {
+    "archiver": "^1.2.0",
     "backoff": "^2.5.0",
     "compression": "^1.6.2",
     "connect-mongodb-session": "^1.1.1",
     "debug": "^3.0.1",
+    "dockerode": "^2.4.3",
     "directory-tree": "^2.0.0",
     "express": "^4.14.0",
     "express-session": "^1.14.0",
@@ -31,7 +33,9 @@
     "mimos": "^3.0.3",
     "mongoose": "^4.5.5",
     "mongoose-timestamp": "^0.6.0",
-    "passport": "^0.4.0"
+    "passport": "^0.4.0",
+    "response-time": "^2.3.2",
+    "timer-machine": "^1.1.0"
   },
   "devDependencies": {
     "adm-zip": "^0.4.7",
@@ -39,6 +43,9 @@
     "mocha": "^3.5.0",
     "mongojs": "^2.4.1",
     "request": "^2.74.0",
+    "sleep": "^5.0.0",
+    "tar": "^2.2.1",
+    "tar.gz": "^1.0.5",
     "tmp": "0.0.33"
   }
 }

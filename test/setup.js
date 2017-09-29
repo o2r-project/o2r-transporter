@@ -16,26 +16,28 @@
  */
 
 /* eslint-env mocha */
-var mongojs = require('mongojs');
+const mongojs = require('mongojs');
+const sleep = require('sleep');
 const config = require('../config/config');
 
 // test parameters for local session authentication directly via fixed database entries
-var orcid = '0000-0001-6021-1617';
-var orcid_plain = '0000-0000-0000-0001';
+const orcid = '0000-0001-6021-1617';
+const orcid_plain = '0000-0000-0000-0001';
 
-var sessionId = 'C0LIrsxGtHOGHld8Nv2jedjL4evGgEHo';
-var sessionId_plain = 'yleQfdYnkh-sbj9Ez--_TWHVhXeXNEgq';
+const sessionId = 'C0LIrsxGtHOGHld8Nv2jedjL4evGgEHo';
+const sessionId_plain = 'yleQfdYnkh-sbj9Ez--_TWHVhXeXNEgq';
 
-var env = process.env;
-global.test_host = env.TEST_HOST ||  'http://localhost:' + config.net.port;
-global.test_host_load = env.TEST_HOST_READ ||  'http://localhost:8088';
-console.log('Testing endpoint at ' + global.test_host);
+const env = process.env;
+global.test_host = env.TEST_HOST || 'http://localhost:' + config.net.port;
+global.test_host_load = env.TEST_HOST_LOAD || 'http://localhost:8088';
+global.test_host_publish = env.TEST_HOST_PUBLISH || 'http://localhost:8080';
+console.log('Testing endpoint at ' + global.test_host + ' with loader at ' + global.test_host_load + ' and publish via ' + global.test_host_publish);
 
-before(function () {
-    let dbpath = 'localhost/' + config.mongo.database;
-    var db = mongojs(dbpath, ['users', 'sessions']);
+let dbPath = 'localhost/' + config.mongo.database;
+const db = mongojs(dbPath, ['users', 'sessions', 'compendia', 'jobs']);
 
-    var session = {
+loadTestData = function (done) {
+    let session = {
         '_id': sessionId,
         'session': {
             'cookie': {
@@ -52,10 +54,9 @@ before(function () {
         }
     };
     db.sessions.save(session, function (err, doc) {
-        //console.log(doc);
         if (err) throw err;
     });
-    var session_plain = {
+    let session_plain = {
         '_id': sessionId_plain,
         'session': {
             'cookie': {
@@ -75,17 +76,16 @@ before(function () {
         if (err) throw err;
     });
 
-    var o2ruser = {
+    let o2ruser = {
         '_id': '57dc171b8760d15dc1864044',
         'orcid': orcid,
         'level': 100,
         'name': 'o2r-testuser'
     };
     db.users.save(o2ruser, function (err, doc) {
-        //console.log(doc);
         if (err) throw err;
     });
-    var plainuser = {
+    let plainuser = {
         '_id': '57b55ee700aee212007ac27f',
         'orcid': orcid_plain,
         'level': 0,
@@ -95,5 +95,27 @@ before(function () {
         if (err) throw err;
     });
 
-    console.log('Global setup completed for database ' + dbpath);
+    sleep.sleep(3);
+    console.log('Loaded test data into ' + dbPath);
+    done();
+}
+
+before(function (done) {
+    this.timeout(10000);
+
+    // clear all data
+    db.sessions.remove(function (err, doc) {
+        if (err) throw err;
+        db.users.remove(function (err, doc) {
+            //if (err) throw err;
+            db.compendia.remove(function (err, doc) {
+                //if (err) throw err;
+                db.jobs.remove(function (err, doc) {
+                    console.log('Cleared database at ' + dbPath);
+                    loadTestData(done);
+                });
+            });
+        });
+    });
+
 });
