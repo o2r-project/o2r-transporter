@@ -72,7 +72,7 @@ exports.viewData = (req, res) => {
         fs.accessSync(localPath); //throws if does not exist
 
         let answer = rewriteTree(dirTree(localPath),
-          config.fs.compendium.length + config.id_length, // remove local fs path and id
+          localPath.length, // remove local fs path
           '/api/v1/compendium/' + id + '/data' // prepend proper location
         );
 
