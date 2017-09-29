@@ -23,4 +23,6 @@ script:
   - DEBUG=* npm test
 after_failure:
   - sleep 5
+  - docker logs testloader
+  - docker logs testmuncher
   - docker logs testtransporter
