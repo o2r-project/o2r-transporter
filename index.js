@@ -103,6 +103,20 @@ function initApp(callback) {
     app.use(passport.session());
 
     /*
+     * check Docker availability
+     */
+    let Docker = require('dockerode');
+    let docker = new Docker();
+    docker.ping((err, data) => {
+      if(err) {
+        debug('Error pinging Docker: %s', err);
+        throw err;
+      } else {
+        debug('Docker available? %s', data);
+      }
+    });
+
+    /*
      * configure routes
      */
     app.get('/api/v1/job/:id/data/:path(*)', controllers.job.viewPath);
@@ -178,7 +192,7 @@ dbBackoff.on('ready', function (number, delay) {
       mongoose.disconnect(() => {
         debug('Mongoose: Disconnected all connections.');
       });
-      dbBackoff.backoff();
+      dbBackoff.backoff(err);
     } else {
       // delay app startup to when MongoDB is available
       debug('Initial connection open to %s: %s', dbURI, mongoose.connection.readyState);
@@ -188,7 +202,7 @@ dbBackoff.on('ready', function (number, delay) {
           mongoose.disconnect(() => {
             debug('Mongoose: Disconnected all connections.');
           });
-          dbBackoff.backoff();
+          dbBackoff.backoff(err);
         }
         debug('Started application.');
       });
