@@ -79,7 +79,6 @@ describe('Image download', function () {
                     zipEntries.forEach(function (entry) {
                         filenames.push(entry.entryName);
                     });
-                    console.log(filenames);
 
                     assert.oneOf('bagit.txt', filenames);
                     assert.oneOf('data/image.tar', filenames);
