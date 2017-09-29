@@ -91,9 +91,9 @@ describe('Image download', function () {
 
         it('should contain a tarball of Docker image in gzipped .tar archive', (done) => {
             let url = global.test_host + '/api/v1/compendium/' + compendium_id + '.tar?gzip';
+            let tgz = new targz();
             let filenames = [];
-
-            let parser = targz().createParseStream();
+            let parser = tgz.createParseStream();
             parser.on('entry', function (entry) {
                 filenames.push(entry.path);
             });
@@ -137,8 +137,9 @@ describe('Image download', function () {
 
         it('should contain a tarball of Docker image in tar.gz archive when explicitly asking for it', (done) => {
             let url = global.test_host + '/api/v1/compendium/' + compendium_id + '.tar?gzip&image=true';
+            let tgz = new targz();
             let filenames = [];
-            let parser = targz().createParseStream();
+            let parser = tgz.createParseStream();
             parser.on('entry', function (entry) {
                 filenames.push(entry.path);
             });
@@ -182,8 +183,9 @@ describe('Image download', function () {
 
         it('should not have a tarball of Docker image in tar.gz archive when explicitly not asking for it', (done) => {
             let url = global.test_host + '/api/v1/compendium/' + compendium_id + '.tar.gz?image=false';
+            let tgz = new targz();
             let filenames = [];
-            let parser = targz().createParseStream();
+            let parser = tgz.createParseStream();
             parser.on('entry', function (entry) {
                 filenames.push(entry.path);
             });
@@ -204,8 +206,9 @@ describe('Image download', function () {
 
         it('should not have a tarball of Docker image in gzipped tar archive when explicitly not asking for it', (done) => {
             let url = global.test_host + '/api/v1/compendium/' + compendium_id + '.tar?image=false&gzip';
+            let tgz = new targz();
             let filenames = [];
-            let parser = targz().createParseStream();
+            let parser = tgz.createParseStream();
             parser.on('entry', function (entry) {
                 filenames.push(entry.path);
             });

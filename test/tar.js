@@ -145,9 +145,9 @@ describe('TAR downloading', function () {
         });
         it('downloaded file is a gzipped tar archive (can be extracted, files exist)', (done) => {
             let url = global.test_host + '/api/v1/compendium/' + compendium_id + '.tar?gzip&image=false';
-
+            let tgz = new targz();
             let filenames = [];
-            let parser = targz().createParseStream();
+            let parser = tgz.createParseStream();
             parser.on('entry', function (entry) {
                 filenames.push(entry.path);
             });
