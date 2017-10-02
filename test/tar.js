@@ -20,8 +20,8 @@ const assert = require('chai').assert;
 const request = require('request');
 const fs = require('fs');
 const tmp = require('tmp');
-const tar = require('tar');
-const targz = require('tar.gz');
+const tarStream = require('tar-stream');
+const gunzip = require('gunzip-maybe');
 const sleep = require('sleep');
 const path = require('path');
 
@@ -35,7 +35,7 @@ const cookie = 's:C0LIrsxGtHOGHld8Nv2jedjL4evGgEHo.GMsWD5Vveq0vBt7/4rGeoH5Xx7Dd2
 
 describe('TAR downloading', function () {
     let secs = 10;
-    
+
     let compendium_id = null;
     before(function (done) {
         this.timeout(20000);
@@ -63,7 +63,7 @@ describe('TAR downloading', function () {
                 done();
             });
         });
-        it('content-type should be tar', (done) => {
+        it('content-type should be application/x-tar', (done) => {
             request(global.test_host + '/api/v1/compendium/' + compendium_id + '.tar?image=false', (err, res) => {
                 assert.ifError(err);
                 assert.equal(res.headers['content-type'], 'application/x-tar');
@@ -78,39 +78,32 @@ describe('TAR downloading', function () {
             });
         });
         it('downloaded file is a tar archive (can be extracted, files exist)', (done) => {
-            let tmpfile = tmp.tmpNameSync() + '.tar';
-            let tmpdir = tmp.dirSync().name;
             let url = global.test_host + '/api/v1/compendium/' + compendium_id + '.tar?image=false';
+            let filenames = [];
+            let extractTar = tarStream.extract();
+            extractTar.on('entry', function (header, stream, next) {
+                filenames.push(header.name);
+                stream.on('end', function () {
+                    next();
+                })
+                stream.resume();
+            });
+            extractTar.on('finish', function () {
+                assert.oneOf('data/erc.yml', filenames);
+                assert.oneOf('data/main.Rmd', filenames);
+                assert.oneOf('data/.erc/metadata_o2r.json', filenames);
+                done();
+            });
+            extractTar.on('error', function (e) {
+                done(e);
+            });
 
             request.get(url)
                 .on('error', function (err) {
                     done(err);
                 })
-                .pipe(fs.createWriteStream(tmpfile))
-                .on('finish', function () {
-                    let extractor = tar.Extract({ path: tmpdir })
-                        .on('error', function (err) {
-                            done(err);
-                        })
-                        .on('end', function () {
-                            let filenames = fs.readdirSync(tmpdir);
-                            assert.oneOf('data', filenames);
-                            filenames = fs.readdirSync(path.join(tmpdir, 'data'));
-                            assert.oneOf('erc.yml', filenames);
-                            assert.oneOf('main.Rmd', filenames);
-
-                            filenames = fs.readdirSync(path.join(tmpdir,'data', '.erc'));
-                            assert.oneOf('metadata_o2r.json', filenames);
-
-                            done();
-                        });
-
-                    fs.createReadStream(tmpfile)
-                        .on('error', function (err) {
-                            done(err);
-                        })
-                        .pipe(extractor);
-                });
+                // NOT using gunzip() here, should not be needed!
+                .pipe(extractTar);
         });
     });
 
@@ -122,6 +115,7 @@ describe('TAR downloading', function () {
                 done();
             });
         });
+
         it('should respond with HTTP 200 in response for ?gzip', (done) => {
             request(global.test_host + '/api/v1/compendium/' + compendium_id + '.tar?gzip&image=false', (err, res) => {
                 assert.ifError(err);
@@ -129,13 +123,15 @@ describe('TAR downloading', function () {
                 done();
             });
         });
-        it('content-type should be tar gz', (done) => {
+
+        it('content-type should be application/gzip', (done) => { // https://superuser.com/a/960710
             request(global.test_host + '/api/v1/compendium/' + compendium_id + '.tar?gzip&image=false', (err, res) => {
                 assert.ifError(err);
-                assert.equal(res.headers['content-type'], 'application/octet-stream');
+                assert.equal(res.headers['content-type'], 'application/gzip');
                 done();
             });
         });
+
         it('content disposition is set to file name attachment', (done) => {
             request(global.test_host + '/api/v1/compendium/' + compendium_id + '.tar?gzip&image=false', (err, res) => {
                 assert.ifError(err);
@@ -143,26 +139,34 @@ describe('TAR downloading', function () {
                 done();
             });
         });
+
         it('downloaded file is a gzipped tar archive (can be extracted, files exist)', (done) => {
             let url = global.test_host + '/api/v1/compendium/' + compendium_id + '.tar?gzip&image=false';
-            let tgz = new targz();
             let filenames = [];
-            let parser = tgz.createParseStream();
-            parser.on('entry', function (entry) {
-                filenames.push(entry.path);
+            let extractTar = tarStream.extract();
+            extractTar.on('entry', function (header, stream, next) {
+                filenames.push(header.name);
+                stream.on('end', function () {
+                    next();
+                })
+                stream.resume();
             });
-            parser.on('end', function () {
+            extractTar.on('finish', function () {
                 assert.oneOf('data/erc.yml', filenames);
                 assert.oneOf('data/main.Rmd', filenames);
                 assert.oneOf('data/.erc/metadata_o2r.json', filenames);
                 done();
+            });
+            extractTar.on('error', function (e) {
+                done(e);
             });
 
             request.get(url)
                 .on('error', function (err) {
                     done(err);
                 })
-                .pipe(parser);
+                .pipe(gunzip())
+                .pipe(extractTar);
         });
     });
 });

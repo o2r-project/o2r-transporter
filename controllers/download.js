@@ -270,6 +270,7 @@ exports.downloadTar = (req, res) => {
         let filename = id + '.tar';
         if (gzip) {
           filename = filename + '.gz';
+          res.set('Content-Type', 'application/gzip'); // https://superuser.com/a/960710
         }
         res.attachment(filename);
 
