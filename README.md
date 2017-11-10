@@ -10,6 +10,7 @@ It integrates the now deprecated microservices [`o2r-transportar`](https://githu
 ## o2r web API routes
 
 - `/api/v1/compendium/:id/data`
+- `/api/v1/compendium/:id/data/filename.txt?size=42`
 - `/api/v1/job/:id/data`
 - `/api/v1/compendium/:id.zip`
 - `/api/v1/compendium/:id.tar.gz.`
