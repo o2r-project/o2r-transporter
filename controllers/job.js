@@ -43,10 +43,10 @@ exports.viewPath = (req, res) => {
               return;
             }
             debug('Returned %s', finalPath);
-            res.sendFile(finalPath);
+            res.status(200).sendFile(finalPath);
           });
         } else {
-          res.sendFile(localPath);
+          res.status(200).sendFile(localPath);
         }
       } catch (e) {
         debug(e);
