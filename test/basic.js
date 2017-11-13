@@ -154,7 +154,6 @@ describe('Accessing job files', () => {
   let job_data_uri, job_id;
 
   before(function (done) {
-    console.log("creating compendium");
     let req = createCompendiumPostRequest('./test/erc/with_metadata', cookie_o2r);
     this.timeout(10000);
 
@@ -162,22 +161,21 @@ describe('Accessing job files', () => {
       assert.ifError(err);
       let compendium_id = JSON.parse(body).id;
       let compendium_data_uri = global.test_host + '/api/v1/compendium/' + compendium_id + '/data/';
-      console.log(compendium_data_uri);
+      console.log("Compendium data URI: " + compendium_data_uri);
 
       publishCandidate(compendium_id, cookie_o2r, () => {
-        console.log(compendium_id);
         this.timeout(10000);
         startJob(compendium_id, (res) => {
           job_id = res;
           job_data_uri = global.test_host + '/api/v1/job/' + job_id + '/data/';
-          console.log(job_data_uri);
+          console.log("Job data URI: " + job_data_uri);
           done();
         });
       });
     });
   });
 
-  describe('GET /api/v1/job/<id>/data/:path(*)', () => {
+  describe.only('GET /api/v1/job/<id>/data/:path(*)', () => {
     it('should respond with 200 Found', (done) => {
       let reqFilePath = 'data/display.html';
       request(job_data_uri + reqFilePath, (err, res, body) => {
@@ -223,6 +221,28 @@ describe('Accessing job files', () => {
         assert.ifError(err);
         assert.equal(res.statusCode, 200);
         assert.include(res.headers, {'content-type': 'application/octet-stream', 'content-length': '279'}, 'returned file was not truncated correctly');
+        done();
+      });
+    });
+
+    it('should respond with content-type and size of requested file (.csv)', (done) => {
+      let reqFilePath = 'data/data.csv';
+      request(job_data_uri + reqFilePath, (err, res, body) => {
+        assert.ifError(err);
+        assert.equal(res.statusCode, 200, "request not successful");
+        console.log('content is: ' + JSON.stringify(res.headers));
+        assert.include(res.headers, {'content-type': 'text/csv; charset=UTF-8', 'content-length': '1645'}, 'returned file has unexpected mime-type or size');
+        done();
+      });
+    });
+
+    it('should respond with content-type and new size of requested file when passing a query-param \'size\' (.csv)', (done) => {
+      let reqFilePath = 'data/data.csv';
+      request({uri: job_data_uri + reqFilePath, qs: { size: 10 } }, (err, res, body) => {
+        assert.ifError(err);
+        assert.equal(res.statusCode, 200);
+        console.log('new content is: ' + JSON.stringify(res.headers));
+        assert.include(res.headers, {'content-type': 'text/csv; charset=UTF-8', 'content-length': '319'}, 'returned file was not truncated correctly');
         done();
       });
     });
