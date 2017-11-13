@@ -38,7 +38,7 @@ describe('TAR downloading', function () {
 
     let compendium_id = null;
     before(function (done) {
-        this.timeout(20000);
+        this.timeout(40000);
 
         let req = createCompendiumPostRequest('./test/erc/with_metadata', cookie);
 
