@@ -43,7 +43,7 @@ describe('Image download', function () {
     var compendium_id, job_id = null;
 
     before(function (done) {
-        this.timeout(4000 * secs);
+        this.timeout(0);
 
         let req = createCompendiumPostRequest('./test/erc/with_metadata', cookie);
 

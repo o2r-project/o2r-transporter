@@ -36,7 +36,7 @@ describe('ZIP downloading', function () {
 
     let compendium_id = null;
     before(function (done) {
-        this.timeout(40000);
+        this.timeout(0);
 
         let req = createCompendiumPostRequest('./test/erc/with_metadata', cookie);
 

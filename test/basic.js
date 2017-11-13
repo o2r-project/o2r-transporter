@@ -30,9 +30,12 @@ describe('Accessing payload data of compendia', () => {
 
   before(function (done) {
     let req = createCompendiumPostRequest('./test/erc/with_metadata', cookie_o2r);
-    this.timeout(20000);
+    this.timeout(0);
 
     request(req, (err, res, body) => {
+      console.log(JSON.stringify(err));
+      console.log(JSON.stringify(res));
+      console.log(JSON.stringify(body));
       assert.ifError(err);
       compendium_id = JSON.parse(body).id;
       test_compendium_id = compendium_id;
