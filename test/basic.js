@@ -160,22 +160,19 @@ describe('Accessing job files', () => {
     request(req, (err, res, body) => {
       assert.ifError(err);
       let compendium_id = JSON.parse(body).id;
-      let compendium_data_uri = global.test_host + '/api/v1/compendium/' + compendium_id + '/data/';
-      console.log("Compendium data URI: " + compendium_data_uri);
-
+      // let compendium_data_uri = global.test_host + '/api/v1/compendium/' + compendium_id + '/data/';
       publishCandidate(compendium_id, cookie_o2r, () => {
         this.timeout(10000);
         startJob(compendium_id, (res) => {
           job_id = res;
           job_data_uri = global.test_host + '/api/v1/job/' + job_id + '/data/';
-          console.log("Job data URI: " + job_data_uri);
           done();
         });
       });
     });
   });
 
-  describe.only('GET /api/v1/job/<id>/data/:path(*)', () => {
+  describe('GET /api/v1/job/<id>/data/:path(*)', () => {
     it('should respond with 200 Found', (done) => {
       let reqFilePath = 'data/display.html';
       request(job_data_uri + reqFilePath, (err, res, body) => {
@@ -230,7 +227,6 @@ describe('Accessing job files', () => {
       request(job_data_uri + reqFilePath, (err, res, body) => {
         assert.ifError(err);
         assert.equal(res.statusCode, 200, "request not successful");
-        console.log('content is: ' + JSON.stringify(res.headers));
         assert.include(res.headers, {'content-type': 'text/csv; charset=UTF-8', 'content-length': '1645'}, 'returned file has unexpected mime-type or size');
         done();
       });
@@ -241,7 +237,6 @@ describe('Accessing job files', () => {
       request({uri: job_data_uri + reqFilePath, qs: { size: 10 } }, (err, res, body) => {
         assert.ifError(err);
         assert.equal(res.statusCode, 200);
-        console.log('new content is: ' + JSON.stringify(res.headers));
         assert.include(res.headers, {'content-type': 'text/csv; charset=UTF-8', 'content-length': '319'}, 'returned file was not truncated correctly');
         done();
       });
