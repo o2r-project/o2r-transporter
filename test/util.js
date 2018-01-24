@@ -29,7 +29,7 @@ module.exports.createCompendiumPostRequest = function createCompendiumPostReques
   zip.writeZip(tmpfile);
 
   let formData = {
-    'content_type': 'compendium',
+    'content_type': 'workspace',
     'compendium': {
       value: fs.createReadStream(tmpfile),
       options: {
@@ -47,7 +47,7 @@ module.exports.createCompendiumPostRequest = function createCompendiumPostReques
     method: 'POST',
     jar: j,
     formData: formData,
-    timeout: 10000
+    timeout: 30000
   };
 
   return (reqParams);

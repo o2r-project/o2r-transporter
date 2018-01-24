@@ -65,8 +65,7 @@ c.download.defaults.tar.gzipOptions = {}; // https://nodejs.org/api/zlib.html#zl
 c.download.defaults.includeImage = true;
 
 c.compendium = {};
-c.compendium.imageNamePrefix = 'erc:';
-c.compendium.imageTarballFile = 'data/image.tar';
+c.compendium.imageTarballFile = 'image.tar';
 
 debug('CONFIGURATION:\n%s', util.inspect(c, { depth: null, colors: true }));
 

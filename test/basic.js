@@ -17,6 +17,7 @@
 const assert = require('chai').assert;
 const request = require('request');
 const config = require('../config/config');
+const sleep = require('sleep');
 
 require("./setup")
 const cookie_o2r = 's:C0LIrsxGtHOGHld8Nv2jedjL4evGgEHo.GMsWD5Vveq0vBt7/4rGeoH5Xx7Dd2pgZR9DvhKCyDTY';
@@ -25,12 +26,12 @@ const createCompendiumPostRequest = require('./util').createCompendiumPostReques
 const startJob = require('./util').startJob;
 const publishCandidate = require('./util').publishCandidate;
 
-describe('Accessing payload data of compendia', () => {
+describe('Basic: accessing payload data of compendia', () => {
   let compendium_data_uri, compendium_id = '';
 
   before(function (done) {
-    let req = createCompendiumPostRequest('./test/erc/with_metadata', cookie_o2r);
-    this.timeout(10000);
+    let req = createCompendiumPostRequest('./test/workspace/with_metadata', cookie_o2r);
+    this.timeout(30000);
 
     request(req, (err, res, body) => {
       assert.ifError(err);
@@ -73,11 +74,12 @@ describe('Accessing payload data of compendia', () => {
       });
     });
 
-    it('should contain selected file paths', (done) => {
+    it('should contain file paths of upload files', (done) => {
       request(global.test_host + '/api/v1/compendium/' + compendium_id + '/data/', (err, res, body) => {
         assert.ifError(err);
-        assert.include(body, '/api/v1/compendium/' + compendium_id + '/data/data/Dockerfile');
-        assert.include(body, '/api/v1/compendium/' + compendium_id + '/data/data/erc.yml');
+        assert.include(body, '/api/v1/compendium/' + compendium_id + '/data/Dockerfile');
+        assert.include(body, '/api/v1/compendium/' + compendium_id + '/data/main.Rmd');
+        assert.include(body, '/api/v1/compendium/' + compendium_id + '/data/display.html');
         done();
       });
     });
@@ -92,7 +94,7 @@ describe('Accessing payload data of compendia', () => {
   });
 });
 
-describe('Accessing archive downloads', function () {
+describe('Basic: accessing archive downloads', function () {
   describe('GET non-existing compendium at tar endpoint', function () {
     it('should respond with HTTP 404 status code at .tar', (done) => {
       request(global.test_host + '/api/v1/compendium/1234.tar', (err, res, body) => {
@@ -121,7 +123,7 @@ describe('Accessing archive downloads', function () {
       });
     });
 
-    it('should mention "no compendium" in a valid JSON document with  error message at .tar.gz', (done) => {
+    it('should mention "no compendium" in a valid JSON document with error message at .tar.gz', (done) => {
       request(global.test_host + '/api/v1/compendium/1234.tar.gz', (err, res, body) => {
         assert.ifError(err);
         let response = JSON.parse(body);
@@ -150,32 +152,31 @@ describe('Accessing archive downloads', function () {
   });
 });
 
-describe('Accessing job files', () => {
+describe('Basic: accessing job files', () => {
   let job_data_uri, job_id;
 
   before(function (done) {
-    let req = createCompendiumPostRequest('./test/erc/with_csv_data', cookie_o2r);
-    this.timeout(10000);
+    let req = createCompendiumPostRequest('./test/workspace/with_csv_data', cookie_o2r);
+    this.timeout(40000);
 
     request(req, (err, res, body) => {
       assert.ifError(err);
       let compendium_id = JSON.parse(body).id;
       // let compendium_data_uri = global.test_host + '/api/v1/compendium/' + compendium_id + '/data/';
       publishCandidate(compendium_id, cookie_o2r, () => {
-        this.timeout(10000);
         startJob(compendium_id, (res) => {
           job_id = res;
           job_data_uri = global.test_host + '/api/v1/job/' + job_id + '/data/';
+          sleep.sleep(10);
           done();
         });
       });
     });
   });
 
-  describe('GET /api/v1/job/<id>/data/:path(*)', () => {
+  describe('GET /api/v1/job/<id>/data/display.html', () => {
     it('should respond with 200 Found', (done) => {
-      let reqFilePath = 'data/display.html';
-      request(job_data_uri + reqFilePath, (err, res, body) => {
+      request(job_data_uri + 'display.html', (err, res, body) => {
         assert.ifError(err);
         assert.equal(res.statusCode, 200);
         done();
@@ -183,8 +184,7 @@ describe('Accessing job files', () => {
     });
 
     it('should respond with content-type and size of requested file (.html)', (done) => {
-      let reqFilePath = 'data/display.html';
-      request(job_data_uri + reqFilePath, (err, res, body) => {
+      request(job_data_uri + 'display.html', (err, res, body) => {
         assert.ifError(err);
         assert.equal(res.statusCode, 200, "request not successful");
         assert.include(res.headers, {'content-type': 'text/html; charset=UTF-8', 'content-length': '805400'}, 'returned file has unexpected mime-type or size');
@@ -193,18 +193,16 @@ describe('Accessing job files', () => {
     });
 
     it('should respond with content-type and size of requested file (.yml)', (done) => {
-      let reqFilePath = 'data/erc.yml';
-      request(job_data_uri + reqFilePath, (err, res, body) => {
+      request(job_data_uri + 'erc.yml', (err, res, body) => {
         assert.ifError(err);
         assert.equal(res.statusCode, 200, "request not successful");
-        assert.include(res.headers, {'content-type': 'text/yaml; charset=UTF-8', 'content-length': '38'}, 'returned file has unexpected mime-type or size');
+        assert.include(res.headers, {'content-type': 'text/yaml; charset=UTF-8', 'content-length': '81'}, 'returned file has unexpected mime-type or size');
         done();
       });
     });
 
     it('should respond with content-type and size of requested file (.Rmd)', (done) => {
-      let reqFilePath = 'data/main.Rmd';
-      request(job_data_uri + reqFilePath, (err, res, body) => {
+      request(job_data_uri + 'main.Rmd', (err, res, body) => {
         assert.ifError(err);
         assert.equal(res.statusCode, 200, "request not successful");
         assert.include(res.headers, {'content-type': 'application/octet-stream', 'content-length': '4346'}, 'returned file has unexpected mime-type or size');
@@ -213,8 +211,7 @@ describe('Accessing job files', () => {
     });
 
     it('should respond with content-type and new size of requested file when passing a query-param \'size\' (.Rmd)', (done) => {
-      let reqFilePath = 'data/main.Rmd';
-      request({uri: job_data_uri + reqFilePath, qs: { size: 10 } }, (err, res, body) => {
+      request({uri: job_data_uri + 'main.Rmd', qs: { size: 10 } }, (err, res, body) => {
         assert.ifError(err);
         assert.equal(res.statusCode, 200);
         assert.include(res.headers, {'content-type': 'application/octet-stream', 'content-length': '279'}, 'returned file was not truncated correctly');
@@ -223,8 +220,7 @@ describe('Accessing job files', () => {
     });
 
     it('should respond with content-type and size of requested file (.csv)', (done) => {
-      let reqFilePath = 'data/data.csv';
-      request(job_data_uri + reqFilePath, (err, res, body) => {
+      request(job_data_uri + 'data.csv', (err, res, body) => {
         assert.ifError(err);
         assert.equal(res.statusCode, 200, "request not successful");
         assert.include(res.headers, {'content-type': 'text/csv; charset=UTF-8', 'content-length': '1645'}, 'returned file has unexpected mime-type or size');
@@ -233,8 +229,7 @@ describe('Accessing job files', () => {
     });
 
     it('should respond with content-type and new size of requested file when passing a query-param \'size\' (.csv)', (done) => {
-      let reqFilePath = 'data/data.csv';
-      request({uri: job_data_uri + reqFilePath, qs: { size: 10 } }, (err, res, body) => {
+      request({uri: job_data_uri + 'data.csv', qs: { size: 10 } }, (err, res, body) => {
         assert.ifError(err);
         assert.equal(res.statusCode, 200);
         assert.include(res.headers, {'content-type': 'text/csv; charset=UTF-8', 'content-length': '319'}, 'returned file was not truncated correctly');

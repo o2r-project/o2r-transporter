@@ -37,15 +37,13 @@ const config = require('../config/config');
 require("./setup");
 const cookie = 's:C0LIrsxGtHOGHld8Nv2jedjL4evGgEHo.GMsWD5Vveq0vBt7/4rGeoH5Xx7Dd2pgZR9DvhKCyDTY';
 
-var secs = 20;
-
 describe('Image download', function () {
     var compendium_id, job_id = null;
 
     before(function (done) {
-        this.timeout(2000 * secs);
+        this.timeout(30000);
 
-        let req = createCompendiumPostRequest('./test/erc/with_metadata', cookie);
+        let req = createCompendiumPostRequest('./test/workspace/with_metadata', cookie);
 
         request(req, (err, res, body) => {
             assert.ifError(err);
@@ -55,7 +53,7 @@ describe('Image download', function () {
                 startJob(compendium_id, id => {
                     assert.ok(id);
                     job_id = id;
-                    sleep.sleep(secs);
+                    sleep.sleep(10);
                     done();
                 })
             });
@@ -81,14 +79,12 @@ describe('Image download', function () {
                         filenames.push(entry.entryName);
                     });
 
-                    assert.oneOf('bagit.txt', filenames);
-                    assert.oneOf('data/image.tar', filenames);
-                    assert.oneOf('data/main.Rmd', filenames);
-                    assert.oneOf('data/.erc/metadata_o2r.json', filenames);
-                    assert.lengthOf(filenames, 15, 'all files in tarball');
+                    assert.oneOf('image.tar', filenames);
+                    assert.oneOf('main.Rmd', filenames);
+                    assert.oneOf('.erc/metadata_o2r_1.json', filenames);
                     done();
                 });
-        }).timeout(secs * 1000);
+        });
 
         it('should contain a tarball of Docker image in gzipped .tar archive', (done) => {
             let url = global.test_host + '/api/v1/compendium/' + compendium_id + '.tar?gzip';
@@ -102,10 +98,8 @@ describe('Image download', function () {
                 stream.resume();
             });
             extractTar.on('finish', function () {
-                assert.oneOf('bagit.txt', filenames);
-                assert.oneOf('data/image.tar', filenames);
-                assert.oneOf('data/.erc/metadata_o2r.json', filenames);
-                assert.lengthOf(filenames, 15, 'all files in tarball');
+                assert.oneOf('image.tar', filenames);
+                assert.oneOf('.erc/metadata_o2r_1.json', filenames);
                 done();
             });
             extractTar.on('error', function (e) {
@@ -118,7 +112,7 @@ describe('Image download', function () {
                 })
                 .pipe(gunzip())
                 .pipe(extractTar);
-        }).timeout(secs * 1000);
+        });
 
         it('should contain a tarball of Docker image in zip archive when explicitly asking for it', (done) => {
             let tmpfile = tmp.tmpNameSync() + '.zip';
@@ -136,12 +130,11 @@ describe('Image download', function () {
                     zipEntries.forEach(function (entry) {
                         filenames.push(entry.entryName);
                     });
-                    assert.oneOf('data/image.tar', filenames);
-                    assert.oneOf('data/.erc/metadata_o2r.json', filenames);
-                    assert.lengthOf(filenames, 15, 'all files in tarball');
+                    assert.oneOf('image.tar', filenames);
+                    assert.oneOf('.erc/metadata_o2r_1.json', filenames);
                     done();
                 });
-        }).timeout(secs * 1000);
+        });
 
         it('should contain a tarball of Docker image in tar.gz archive when explicitly asking for it', (done) => {
             let url = global.test_host + '/api/v1/compendium/' + compendium_id + '.tar?gzip&image=true';
@@ -155,9 +148,7 @@ describe('Image download', function () {
                 stream.resume();
             });
             extractTar.on('finish', function () {
-                assert.oneOf('bagit.txt', filenames);
-                assert.oneOf('data/image.tar', filenames);
-                assert.lengthOf(filenames, 15, 'all expected files in tarball');
+                assert.oneOf('image.tar', filenames);
                 done();
             });
             extractTar.on('error', function (e) {
@@ -170,7 +161,7 @@ describe('Image download', function () {
                 })
                 .pipe(gunzip())
                 .pipe(extractTar);
-        }).timeout(secs * 1000);
+        });
 
         it('should not have a tarball of Docker image in zip archive when explicitly not asking for it', (done) => {
             let tmpfile = tmp.tmpNameSync() + '.zip';
@@ -188,13 +179,12 @@ describe('Image download', function () {
                     zipEntries.forEach(function (entry) {
                         filenames.push(entry.entryName);
                     });
-                    assert.oneOf('bagit.txt', filenames);
-                    assert.notInclude(filenames, 'data/image.tar');
-                    assert.oneOf('data/.erc/metadata_o2r.json', filenames);
-                    assert.lengthOf(filenames, 14, 'all expected files in tarball');
+                    
+                    assert.notInclude(filenames, 'image.tar');
+                    assert.oneOf('.erc/metadata_o2r_1.json', filenames);
                     done();
                 });
-        }).timeout(secs * 1000);
+        });
 
         it('should not have a tarball of Docker image in tar.gz archive when explicitly not asking for it', (done) => {
             let url = global.test_host + '/api/v1/compendium/' + compendium_id + '.tar.gz?image=false';
@@ -208,10 +198,8 @@ describe('Image download', function () {
                 stream.resume();
             });
             extractTar.on('finish', function () {
-                assert.oneOf('bagit.txt', filenames);
-                assert.notInclude(filenames, 'data/image.tar');
-                assert.oneOf('data/.erc/metadata_o2r.json', filenames);
-                assert.lengthOf(filenames, 14, 'all expected files in tarball');
+                assert.notInclude(filenames, 'image.tar');
+                assert.oneOf('erc.yml', filenames);
                 done();
             });
             extractTar.on('error', function (e) {
@@ -224,7 +212,7 @@ describe('Image download', function () {
                 })
                 .pipe(gunzip())
                 .pipe(extractTar);
-        }).timeout(secs * 1000);
+        });
 
         it('should not have a tarball of Docker image in gzipped tar archive when explicitly not asking for it', (done) => {
             let url = global.test_host + '/api/v1/compendium/' + compendium_id + '.tar?image=false&gzip';
@@ -238,10 +226,8 @@ describe('Image download', function () {
                 stream.resume();
             });
             extractTar.on('finish', function () {
-                assert.oneOf('bagit.txt', filenames);
-                assert.notInclude(filenames, 'data/image.tar');
-                assert.oneOf('data/.erc/metadata_o2r.json', filenames);
-                assert.lengthOf(filenames, 14, 'all expected files in tarball');
+                assert.notInclude(filenames, 'image.tar');
+                assert.oneOf('erc.yml', filenames);
                 done();
             });
             extractTar.on('error', function (e) {
@@ -254,7 +240,7 @@ describe('Image download', function () {
                 })
                 .pipe(gunzip())
                 .pipe(extractTar);
-        }).timeout(secs * 1000);
+        });
 
         it('should contain expected files in tarball', (done) => {
             let tmpfile = tmp.tmpNameSync() + '.zip';
@@ -268,7 +254,7 @@ describe('Image download', function () {
                     let zip = new AdmZip(tmpfile);
 
                     zip.getEntries().forEach(function (entry) {
-                        if (entry.entryName === 'data/image.tar') {
+                        if (entry.entryName === 'image.tar') {
                             let filenames = [];
                             let manifestJson = null;
                             let extractTar = tarStream.extract();
@@ -297,7 +283,7 @@ describe('Image download', function () {
                                 assert.include(filenames.toString(), '/layer.tar');
                                 assert.lengthOf(filenames, 7);
                                 assert.property(manifestJson, 'RepoTags');
-                                assert.oneOf(config.compendium.imageNamePrefix + job_id, manifestJson.RepoTags, '"prefix:job_id" tag is in RepoTags list');
+                                assert.oneOf('erc:' + job_id, manifestJson.RepoTags, '"erc:<job_id>" tag is in RepoTags list');
                                 
                                 done();
                             });
@@ -311,13 +297,13 @@ describe('Image download', function () {
                         }
                     });
                 });
-        });
+        }).timeout(60000);
     });
 
     describe('tinkering with local images outside of transporter', function () {
         it('should return an error (HTTP 400, error message in JSON response) when no job was started', (done) => {
             let compendium_id = null;
-            let req = createCompendiumPostRequest('./test/erc/with_metadata', cookie);
+            let req = createCompendiumPostRequest('./test/workspace/with_metadata', cookie);
 
             request(req, (err, res, body) => {
                 assert.ifError(err);
@@ -327,55 +313,21 @@ describe('Image download', function () {
                     request(global.test_host + '/api/v1/compendium/' + compendium_id + '.zip', (err, res, body) => {
                         assert.ifError(err);
                         let response = JSON.parse(body);
-
+                        console.log(response);
                         assert.equal(res.statusCode, 400);
                         assert.isObject(response);
                         assert.property(response, 'error');
-                        assert.include(response.error, 'no job');
+                        assert.include(response.error, 'successful job execution');
                         done();
                     });
 
                 });
             });
-        }).timeout(secs * 1000 * 2);
-
-        it('should return an error (HTTP 500 with valid JSON document) when image was removed locally', (done) => {
-            let compendium_id_tinker = null;
-            let req = createCompendiumPostRequest('./test/erc/with_metadata', cookie);
-
-            request(req, (err, res, body) => {
-                assert.ifError(err);
-                compendium_id_tinker = JSON.parse(body).id;
-
-                publishCandidate(compendium_id_tinker, cookie, () => {
-                    startJob(compendium_id_tinker, id => {
-                        assert.ok(id);
-                        sleep.sleep(secs);
-
-                        exec('docker rmi ' + config.compendium.imageNamePrefix + id, (err, stdout, stderr) => {
-                            if (err || stderr) {
-                                assert.ifError(err);
-                                assert.ifError(stderr);
-                            } else {
-                                request(global.test_host + '/api/v1/compendium/' + compendium_id_tinker + '.zip', (err, res, body) => {
-                                    assert.ifError(err);
-                                    assert.equal(res.statusCode, 500);
-                                    let response = JSON.parse(body);
-                                    assert.isObject(response);
-                                    assert.property(response, 'error');
-                                    assert.include(response.error, 'no such image');
-                                    done();
-                                });
-                            }
-                        });
-                    });
-                });
-            });
-        }).timeout(secs * 1000 * 2);
+        }).timeout(30000);
 
         it('should not fail if image got additional tag', (done) => {
             let compendium_id_tag = null;
-            let req = createCompendiumPostRequest('./test/erc/with_metadata', cookie);
+            let req = createCompendiumPostRequest('./test/workspace/with_metadata', cookie);
 
             request(req, (err, res, body) => {
                 assert.ifError(err);
@@ -384,9 +336,9 @@ describe('Image download', function () {
                 publishCandidate(compendium_id_tag, cookie, () => {
                     startJob(compendium_id_tag, id => {
                         assert.ok(id);
-                        sleep.sleep(secs);
+                        sleep.sleep(10);
 
-                        exec('docker tag ' + config.compendium.imageNamePrefix + id + ' another:tag', (err, stdout, stderr) => {
+                        exec('docker tag erc:' + id + ' another:tag', (err, stdout, stderr) => {
                             if (err || stderr) {
                                 assert.ifError(err);
                                 assert.ifError(stderr);
@@ -405,10 +357,9 @@ describe('Image download', function () {
                                         zipEntries.forEach(function (entry) {
                                             filenames.push(entry.entryName);
                                         });
-                                        assert.oneOf('bagit.txt', filenames);
-                                        assert.oneOf('data/image.tar', filenames);
-                                        assert.oneOf('data/.erc/metadata_o2r.json', filenames);
-                                        assert.lengthOf(filenames, 15, 'all expected files in tarball');
+
+                                        assert.oneOf('image.tar', filenames);
+                                        assert.oneOf('erc.yml', filenames);
                                         done();
                                     });
                             }
@@ -416,7 +367,7 @@ describe('Image download', function () {
                     });
                 });
             });
-        }).timeout(secs * 1000 * 2);
+        }).timeout(30000);
 
     });
 

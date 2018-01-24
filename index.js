@@ -103,22 +103,6 @@ function initApp(callback) {
     app.use(passport.session());
 
     /*
-     * check Docker availability
-     */
-    Docker = require('dockerode');
-    docker = new Docker();
-    docker.ping((err, data) => {
-      if(err) {
-        debug('Error pinging Docker: %s', err);
-        throw err;
-      } else {
-        debug('Docker available? %s', data);
-        delete docker;
-        delete Docker;
-      }
-    });
-
-    /*
      * configure routes
      */
     app.get('/api/v1/job/:id/data/:path(*)', controllers.job.viewPath);
