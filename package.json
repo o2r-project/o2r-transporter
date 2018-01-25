@@ -7,7 +7,7 @@
     "start": "node index.js",
     "start_log": "DEBUG=* node index.js",
     "debug": "DEBUG=* node debug index.js",
-    "test": "mocha"
+    "test": "DEBUG=transporter,transporter:* mocha"
   },
   "repository": {
     "type": "git",
