@@ -31,7 +31,7 @@ describe('Basic: accessing payload data of compendia', () => {
 
   before(function (done) {
     let req = createCompendiumPostRequest('./test/workspace/with_metadata', cookie_o2r);
-    this.timeout(30000);
+    this.timeout(60000);
 
     request(req, (err, res, body) => {
       assert.ifError(err);
