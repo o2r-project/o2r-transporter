@@ -99,9 +99,14 @@ module.exports.startJob = function (compendium_id, done) {
     formData: {
       compendium_id: compendium_id
     },
-    timeout: 1000
+    timeout: 10000
   }, (err, res, body) => {
     let response = JSON.parse(body);
+
+    console.log("STARTED JOB:");
+    console.log(response);
+    console.log(JSON.stringify(res));
+    
     done(response.job_id);
   });
 }
