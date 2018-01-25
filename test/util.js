@@ -19,6 +19,7 @@ const request = require('request');
 const tmp = require('tmp');
 const AdmZip = require('adm-zip');
 const fs = require('fs');
+const debug = require('debug')('transporter:test');
 
 const cookie_plain = 's:yleQfdYnkh-sbj9Ez--_TWHVhXeXNEgq.qRmINNdkRuJ+iHGg5woRa9ydziuJ+DzFG9GnAZRvaaM';
 
@@ -79,8 +80,11 @@ module.exports.publishCandidate = function (compendium_id, cookie, done) {
     } else {
       let response = JSON.parse(body);
       updateMetadata.json = { o2r: response.metadata.o2r };
+      debug("Received metadata, not updating it as user %s: %s", cookie, JSON.stringify(response));
 
       request(updateMetadata, (err, res, body) => {
+        let response = JSON.parse(body);
+        debug("Published candidate: %s", JSON.stringify(response));
         done();
       });
     }
@@ -102,11 +106,7 @@ module.exports.startJob = function (compendium_id, done) {
     timeout: 10000
   }, (err, res, body) => {
     let response = JSON.parse(body);
-
-    console.log("STARTED JOB:");
-    console.log(response);
-    console.log(JSON.stringify(res));
-    
+    debug("Started job: %s", JSON.stringify(response));
     done(response.job_id);
   });
 }
