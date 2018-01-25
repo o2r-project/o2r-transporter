@@ -120,3 +120,8 @@ before(function (done) {
     });
 
 });
+
+after(function (done) {
+    db.close();
+    done();
+});

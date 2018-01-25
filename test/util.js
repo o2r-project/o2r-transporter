@@ -80,11 +80,10 @@ module.exports.publishCandidate = function (compendium_id, cookie, done) {
     } else {
       let response = JSON.parse(body);
       updateMetadata.json = { o2r: response.metadata.o2r };
-      debug("Received metadata, not updating it as user %s: %s", cookie, JSON.stringify(response));
+      debug("Received metadata, now updating it as user %s", cookie);
 
       request(updateMetadata, (err, res, body) => {
-        let response = JSON.parse(body);
-        debug("Published candidate: %s", JSON.stringify(response));
+        debug("Published candidate: %s", body);
         done();
       });
     }
