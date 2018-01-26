@@ -34,13 +34,11 @@ const cookie = 's:C0LIrsxGtHOGHld8Nv2jedjL4evGgEHo.GMsWD5Vveq0vBt7/4rGeoH5Xx7Dd2
 
 
 describe('TAR downloading', function () {
-    let secs = 10;
-
     let compendium_id = null;
     before(function (done) {
-        this.timeout(20000);
+        this.timeout(30000);
 
-        let req = createCompendiumPostRequest('./test/erc/with_metadata', cookie);
+        let req = createCompendiumPostRequest('./test/workspace/with_metadata', cookie);
 
         request(req, (err, res, body) => {
             compendium_id = JSON.parse(body).id;
@@ -48,7 +46,7 @@ describe('TAR downloading', function () {
             publishCandidate(compendium_id, cookie, () => {
                 startJob(compendium_id, job_id => {
                     assert.ok(job_id);
-                    sleep.sleep(secs);
+                    sleep.sleep(10);
                     done();
                 })
             });
@@ -89,9 +87,9 @@ describe('TAR downloading', function () {
                 stream.resume();
             });
             extractTar.on('finish', function () {
-                assert.oneOf('data/erc.yml', filenames);
-                assert.oneOf('data/main.Rmd', filenames);
-                assert.oneOf('data/.erc/metadata_o2r.json', filenames);
+                assert.oneOf('erc.yml', filenames);
+                assert.oneOf('main.Rmd', filenames);
+                assert.oneOf('.erc/metadata_o2r_1.json', filenames);
                 done();
             });
             extractTar.on('error', function (e) {
@@ -152,9 +150,9 @@ describe('TAR downloading', function () {
                 stream.resume();
             });
             extractTar.on('finish', function () {
-                assert.oneOf('data/erc.yml', filenames);
-                assert.oneOf('data/main.Rmd', filenames);
-                assert.oneOf('data/.erc/metadata_o2r.json', filenames);
+                assert.oneOf('erc.yml', filenames);
+                assert.oneOf('main.Rmd', filenames);
+                assert.oneOf('.erc/metadata_o2r_1.json', filenames);
                 done();
             });
             extractTar.on('error', function (e) {

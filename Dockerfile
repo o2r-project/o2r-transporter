@@ -12,27 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-FROM alpine:3.6
+FROM node:8-alpine
 
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" > /etc/apk/repositories \
   && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
   && echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories
 
 RUN apk add --no-cache \
-    nodejs \
     dumb-init \
-    nodejs-npm \
     imagemagick \
   && rm -rf /var/cache
 
 WORKDIR /transporter
 COPY package.json package.json
+RUN npm install --production
+
 COPY index.js index.js
 COPY controllers/ controllers/
 COPY lib/ lib/
 COPY config/ config/
-
-RUN npm install --production
 
 # Metadata params provided with docker build command
 ARG VERSION=dev

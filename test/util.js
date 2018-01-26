@@ -19,6 +19,8 @@ const request = require('request');
 const tmp = require('tmp');
 const AdmZip = require('adm-zip');
 const fs = require('fs');
+const debug = require('debug')('transporter:test');
+const util = require('util');
 
 const cookie_plain = 's:yleQfdYnkh-sbj9Ez--_TWHVhXeXNEgq.qRmINNdkRuJ+iHGg5woRa9ydziuJ+DzFG9GnAZRvaaM';
 
@@ -29,7 +31,7 @@ module.exports.createCompendiumPostRequest = function createCompendiumPostReques
   zip.writeZip(tmpfile);
 
   let formData = {
-    'content_type': 'compendium',
+    'content_type': 'workspace',
     'compendium': {
       value: fs.createReadStream(tmpfile),
       options: {
@@ -47,7 +49,7 @@ module.exports.createCompendiumPostRequest = function createCompendiumPostReques
     method: 'POST',
     jar: j,
     formData: formData,
-    timeout: 10000
+    timeout: 30000
   };
 
   return (reqParams);
@@ -78,9 +80,12 @@ module.exports.publishCandidate = function (compendium_id, cookie, done) {
       console.error('error publishing candidate: %s', err);
     } else {
       let response = JSON.parse(body);
+      debug("Received metadata for compendium %s: \%s", compendium_id, util.inspect(response, {color: true, depth: null}));
       updateMetadata.json = { o2r: response.metadata.o2r };
+      debug("Now updating it as user %s with document:\n", cookie, util.inspect(updateMetadata, {color: true, depth: null}));
 
       request(updateMetadata, (err, res, body) => {
+        debug("Published candidate: %s", JSON.stringify(body));
         done();
       });
     }
@@ -99,9 +104,10 @@ module.exports.startJob = function (compendium_id, done) {
     formData: {
       compendium_id: compendium_id
     },
-    timeout: 1000
+    timeout: 10000
   }, (err, res, body) => {
     let response = JSON.parse(body);
+    debug("Started job: %s", JSON.stringify(response));
     done(response.job_id);
   });
 }

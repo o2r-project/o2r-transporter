@@ -17,94 +17,12 @@
 const config = require('../config/config');
 const debug = require('debug')('transporter:download');
 const fs = require('fs');
+const util = require('util');
 const Compendium = require('../lib/model/compendium');
 const Job = require('../lib/model/job');
 const archiver = require('archiver');
 const Timer = require('timer-machine');
-const Docker = require('dockerode');
 const path = require('path');
-
-function saveImage(outputStream, compendium_id, res, callback) {
-  let docker = new Docker();
-  debug('[%s] Docker client set up to accessing image: %s', compendium_id, JSON.stringify(docker));
-
-  let filter = {
-    compendium_id: compendium_id,
-    status: "success"
-  };
-  Job.find(filter).select('id').limit(1).sort({ updatedAt: 'desc' }).exec((err, jobs) => {
-    if (err) {
-      res.status(500).send({ error: 'error finding last job for compendium' });
-    } else {
-      if (jobs.length <= 0) {
-        debug('Error: No job for %s found, cannot add image.', compendium_id);
-        res.status(400).send({ error: 'no job found for this compendium, run a job before downloading with image' });
-      } else {
-        // image creation steps as promises
-        let inspect = (passon) => {
-          return new Promise((fulfill, reject) => {
-            passon.image.inspect((err, data) => {
-              if (err) {
-                debug('Error inspecting image: %s', err);
-                reject(err);
-              }
-              else {
-                debug('Image tags (a.k.a.s): %s', JSON.stringify(data.RepoTags));
-                fulfill(passon);
-              }
-            });
-          })
-        };
-        let getAndSave = (passon) => {
-          return new Promise((fulfill, reject) => {
-            debug('Getting image %s ...', JSON.stringify(passon.image));
-            passon.image.get((err, imageStream) => {
-              if (err) {
-                debug('Error while handling image stream: %s', err.message);
-                reject(err);
-              }
-              else {
-                debug('Saving image stream to provided stream: %s > %s', imageStream, passon.outputStream);
-                //archive.append(stream, { name: config.compendium.imageTarballFile, date: new Date() });
-                imageStream.pipe(passon.outputStream);
-
-                passon.outputStream.on('finish', function () {
-                  debug('Image saved to provided stream for %s', passon.id);
-                  fulfill(passon);
-                });
-                passon.outputStream.on('error', (err) => {
-                  debug('Error saving image to provided stream: %s', err);
-                  reject(err);
-                })
-              }
-            });
-          })
-        };
-        let answer = (passon) => {
-          return new Promise((fulfill) => {
-            debug('Answering callback for compendium %s with image %s', passon.id, passon.image.name);
-            callback();
-            fulfill(passon);
-          })
-        };
-
-        let job = jobs[0];
-        let imageTag = config.compendium.imageNamePrefix + job.id;
-        debug('Found latest job %s for compendium %s and will include image %s', job.id, compendium_id, imageTag);
-        let image = docker.getImage(imageTag);
-        debug('Found image: %s', image.name);
-
-        inspect({ image: image, outputStream: outputStream, id: compendium_id })
-          .then(getAndSave)
-          .then(answer)
-          .catch(err => {
-            debug("Rejection or unhandled failure while saving image %s to file: \n\t%s", image.name, JSON.stringify(err));
-            callback(err);
-          });
-      }
-    }
-  });
-}
 
 function imageTarballExists(compendiumPath) {
   let p = path.join(compendiumPath, config.compendium.imageTarballFile);
@@ -139,176 +57,122 @@ function archiveCompendium(archive, compendiumPath, ignoreImage, ignoreMetadataF
   archive.finalize();
 }
 
-// based on https://github.com/archiverjs/node-archiver/blob/master/examples/express.js
-exports.downloadZip = (req, res) => {
+returnError = (res, status, message, timer) => {
+  if(timer) timer.stop();
+  
+  res.setHeader('Content-Type', 'application/json');
+  res.status(status).send({ error: message });
+}
+
+// throws exception if localPath does not exist
+returnArchive = (res, id, localPath, filename, archive) => {
+  debug('[%s] returning archive with filename %s', id, filename); //, util.inspect(archive, {depth: 1, color: true}));
+
+  fs.accessSync(localPath); //throws if does not exist
+
+  let timer = new Timer();
+  timer.start();
+
+  archive.on('error', function (err) {
+    returnError(res, 500, erpReq.message, timer);
+  });
+
+  archive.on('end', function () {
+    timer.stop();
+    debug('[%s] Wrote %d bytes in %s ms to archive', id, archive.pointer(), timer.time());
+  });
+
+  //set the archive name
+  res.attachment(filename);
+
+  //this is the streaming magic
+  archive.pipe(res);
+
+  if (pReq.includeImage) {
+    if (!imageTarballExists(localPath)) {
+      debug('[%s] Error: cannot include image tarball because it is missing at %s', id, localPath);
+      returnError(res, 400, 'Image tarball is missing, so it cannot be included. Please ensure a successful job execution first.', timer);
+    } else {
+      archiveCompendium(archive, localPath, false, false);
+    }
+  } else {
+    archiveCompendium(archive, localPath, true, false);
+  }
+}
+
+parseRequest = (req) => {
   let includeImage = config.download.defaults.includeImage;
   if (req.query.image) {
     includeImage = (req.query.image === "true");
   }
-  let id = req.params.id;
-  let originalUrl = req.protocol + '://' + ':' + req.port + '/' + req.hostname + req.path;
-  debug('Download zip archive for %s (image? %s) with original request %s', id, includeImage, originalUrl);
+  let gzip = false;
+  if (req.query.gzip !== undefined) {
+    gzip = true;
+  }
+  let port = "";
+  if(req.port) {
+    port = ':' + req.port;
+  }
+  
+  return {
+    includeImage: includeImage,
+    id: req.params.id,
+    gzip: gzip,
+    originalUrl: req.protocol + '://' + req.hostname + port + req.path,
+    localPath: path.join(config.fs.compendium, req.params.id)
+  }
+}
 
-  Compendium.findOne({ id }).select('id').exec((err, compendium) => {
+// based on https://github.com/archiverjs/node-archiver/blob/master/examples/express.js
+exports.downloadZip = (req, res) => {
+  pReq = parseRequest(req);
+  debug('Download ZIP archive for %s (image? %s) with original request %s', pReq.id, pReq.includeImage, pReq.originalUrl);
+
+  Compendium.findOne({ id: pReq.id }).select('id').exec((err, compendium) => {
     if (err || compendium == null) {
-      res.setHeader('Content-Type', 'application/json');
-      res.status(404).send({ error: 'no compendium with this id' });
+      returnError(res, 404, 'no compendium with this id');
     } else {
-      let localPath = path.join(config.fs.compendium, id);
-
-      let timer = new Timer();
-      timer.start();
-
       try {
-        debug('Going to zip %s (image: %s)', localPath, includeImage);
-        fs.accessSync(localPath); //throws if does not exist
-
         let archive = archiver('zip', {
-          comment: 'Created by o2r [' + originalUrl + ']',
+          comment: 'Created by o2r [' + pReq.originalUrl + ']',
           statConcurrency: config.download.defaults.statConcurrency
         });
 
-        archive.on('error', function (err) {
-          res.setHeader('Content-Type', 'application/json');
-          res.status(500).send({ error: err.message });
-        });
-
-        archive.on('end', function () {
-          timer.stop();
-          debug('Wrote %d bytes in %s ms to archive', archive.pointer(), timer.time());
-        });
-
-        //set the archive name
-        res.attachment(id + '.zip');
-
-        //this is the streaming magic
-        archive.pipe(res);
-
-        if (includeImage) {
-          if (!imageTarballExists(localPath)) {
-            // this breaks the streaming magic, but simplest way to update bag is to save the tarball as a file
-            let stream = fs.createWriteStream(path.join(localPath, config.compendium.imageTarballFile));
-
-            saveImage(stream, id, res, (err) => {
-              if (err) {
-                debug('Error saving image for %s: %s', id, JSON.stringify(err));
-                res.status(500).send({ error: err.message });
-                timer.stop();
-                return;
-              }
-              debug('Image saved for %s', id);
-
-              if (!res.headersSent) {
-                archiveCompendium(archive, localPath, false, false);
-              } else {
-                debug('Image written to file but headers already sent!');
-              }
-            });
-          } else {
-            archiveCompendium(archive, localPath, false, false);
-          }
-        } else {
-          archiveCompendium(archive, localPath, true, false);
-        }
+        returnArchive(res, pReq.id, pReq.localPath, pReq.id + '.zip', archive);
       } catch (e) {
-        debug(e);
-        res.setHeader('Content-Type', 'application/json');
-        res.status(500).send({ error: e.message });
-        timer.stop();
-        return;
+        debug('[%s] Error: %s', pReq.id, e);
+        returnError(res, 500, e.message);
       }
     }
   });
 };
 
-
 exports.downloadTar = (req, res) => {
-  let includeImage = config.download.defaults.includeImage;
-  if (req.query.image) {
-    includeImage = (req.query.image === "true");
-  }
-  let id = req.params.id;
-  let gzip = false;
-  if (req.query.gzip !== undefined) {
-    gzip = true;
-  }
-  let originalUrl = req.protocol + '://' + ':' + req.port + '/' + req.hostname + req.path;
-  debug('Download zip archive for %s (image? %s gzip? %s) with original request %s', id, includeImage, gzip, originalUrl);
+  pReq = parseRequest(req);
+  debug('[%s] Download TAR archive (image? %s gzip? %s) with original request %s', pReq.id, pReq.includeImage, pReq.gzip, pReq.originalUrl);
 
-  Compendium.findOne({ id }).select('id').exec((err, compendium) => {
+  Compendium.findOne({ id: pReq.id }).select('id').exec((err, compendium) => {
     if (err || compendium == null) {
       res.setHeader('Content-Type', 'application/json');
       res.status(404).send({ error: 'no compendium with this id' });
     } else {
-      let localPath = path.join(config.fs.compendium, id);
-
-      let timer = new Timer();
-      timer.start();
-
       try {
-        debug('Going to tar %s (image: %s, gzip: %s)', localPath, includeImage, gzip);
-        fs.accessSync(localPath); //throws if does not exist
-
         let archive = archiver('tar', {
-          gzip: gzip,
+          gzip: pReq.gzip,
           gzipOptions: config.download.defaults.tar.gzipOptions,
           statConcurrency: config.download.defaults.statConcurrency
         });
 
-        archive.on('error', function (err) {
-          res.setHeader('Content-Type', 'application/json');
-          res.status(500).send({ error: err.message });
-        });
-
-        //on stream closed we can end the request
-        archive.on('end', function () {
-          timer.stop();
-          debug('Archive wrote %d bytes in %s ms', archive.pointer(), timer.time());
-        });
-
-        //set the archive name
-        let filename = id + '.tar';
-        if (gzip) {
+        let filename = pReq.id + '.tar';
+        if (pReq.gzip) {
           filename = filename + '.gz';
-          res.set('Content-Type', 'application/gzip'); // https://superuser.com/a/960710
+          res.set('Content-Type', 'application/gzip'); // https://superusepReq.com/a/960710
         }
-        res.attachment(filename);
 
-        //this is the streaming magic
-        archive.pipe(res);
-
-        if (includeImage) {
-          if (!imageTarballExists(localPath)) {
-            // this breaks the streaming magic, but simplest way to update bag is to save the tarball as a file
-            let stream = fs.createWriteStream(path.join(localPath, config.compendium.imageTarballFile));
-
-            saveImage(stream, id, res, (err) => {
-              if (err) {
-                debug('Error saving image for %s: %s', id, JSON.stringify(err));
-                res.setHeader('Content-Type', 'application/json');
-                res.status(500).send({ error: err.message });
-                timer.stop();
-                return;
-              }
-              debug('Image saved for %s', id);
-
-              if (!res.headersSent) {
-                archiveCompendium(archive, localPath, false);
-              } else {
-                debug('Image written to file but headers already sent!');
-              }
-            });
-          } else {
-            archiveCompendium(archive, localPath, false);
-          }
-        } else {
-          archiveCompendium(archive, localPath, true);
-        }
+        returnArchive(res, pReq.id, pReq.localPath, filename, archive);
       } catch (e) {
-        debug(e);
-        res.setHeader('Content-Type', 'application/json');
-        res.status(500).send({ error: e.message });
-        timer.stop();
+        debug('[%s] Error: %s', pReq.id, e);
+        returnError(res, 500, e.message);
         return;
       }
     }

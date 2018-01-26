@@ -19,6 +19,7 @@
 const mongojs = require('mongojs');
 const sleep = require('sleep');
 const config = require('../config/config');
+const debug = require('debug')('test:setup');
 
 // test parameters for local session authentication directly via fixed database entries
 const orcid = '0000-0001-6021-1617';
@@ -31,7 +32,7 @@ const env = process.env;
 global.test_host = env.TEST_HOST || 'http://localhost:' + config.net.port;
 global.test_host_load = env.TEST_HOST_LOAD || 'http://localhost:8088';
 global.test_host_publish = env.TEST_HOST_PUBLISH || 'http://localhost:8080';
-console.log('Testing endpoint at ' + global.test_host + ' with loader at ' + global.test_host_load + ' and publish via ' + global.test_host_publish);
+debug('Testing endpoint at %s with loader at %s and publish via %s', global.test_host, global.test_host_load, global.test_host_publish);
 
 let dbPath = 'localhost/' + config.mongo.database;
 const db = mongojs(dbPath, ['users', 'sessions', 'compendia', 'jobs']);
@@ -96,7 +97,7 @@ loadTestData = function (done) {
     });
 
     sleep.sleep(3);
-    console.log('Loaded test data into ' + dbPath + '\n\n');
+    debug('Loaded test data to %s', dbPath);
     done();
 }
 
@@ -111,11 +112,16 @@ before(function (done) {
             db.compendia.remove(function (err, doc) {
                 //if (err) throw err;
                 db.jobs.remove(function (err, doc) {
-                    console.log('Cleared database at ' + dbPath);
+                    debug('Cleared database at %s', dbPath);
                     loadTestData(done);
                 });
             });
         });
     });
 
+});
+
+after(function (done) {
+    db.close();
+    done();
 });
