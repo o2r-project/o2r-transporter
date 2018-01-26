@@ -80,8 +80,9 @@ module.exports.publishCandidate = function (compendium_id, cookie, done) {
       console.error('error publishing candidate: %s', err);
     } else {
       let response = JSON.parse(body);
+      debug("Received metadata for compendium %s: \%s", compendium_id, util.inspect(response, {color: true, depth: null}));
       updateMetadata.json = { o2r: response.metadata.o2r };
-      debug("Received metadata, now updating it as user %s with document:\n", cookie, util.inspect(updateMetadata, {color: true, depth: null}));
+      debug("Now updating it as user %s with document:\n", cookie, util.inspect(updateMetadata, {color: true, depth: null}));
 
       request(updateMetadata, (err, res, body) => {
         debug("Published candidate: %s", JSON.stringify(body));
