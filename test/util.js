@@ -20,6 +20,7 @@ const tmp = require('tmp');
 const AdmZip = require('adm-zip');
 const fs = require('fs');
 const debug = require('debug')('transporter:test');
+const util = require('util');
 
 const cookie_plain = 's:yleQfdYnkh-sbj9Ez--_TWHVhXeXNEgq.qRmINNdkRuJ+iHGg5woRa9ydziuJ+DzFG9GnAZRvaaM';
 
@@ -80,7 +81,7 @@ module.exports.publishCandidate = function (compendium_id, cookie, done) {
     } else {
       let response = JSON.parse(body);
       updateMetadata.json = { o2r: response.metadata.o2r };
-      debug("Received metadata, now updating it as user %s", cookie);
+      debug("Received metadata, now updating it as user %s with document:\n", cookie, util.inspect(updateMetadata, {color: true, depth: null}));
 
       request(updateMetadata, (err, res, body) => {
         debug("Published candidate: %s", JSON.stringify(body));
