@@ -78,6 +78,9 @@ module.exports.publishCandidate = function (compendium_id, cookie, done) {
   request(getMetadata, (err, res, body) => {
     if (err) {
       console.error('error publishing candidate: %s', err);
+    } else if(response.error) {
+      console.error('error publishing candidate: %s', JSON.stringify(response));
+      throw new Error('Could not publish candidate, aborting test.');
     } else {
       let response = JSON.parse(body);
       //debug("Received metadata for compendium %s: \%s", compendium_id, util.inspect(response, {color: true, depth: 2}));
