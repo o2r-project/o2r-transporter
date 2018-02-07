@@ -88,7 +88,7 @@ module.exports.publishCandidate = function (compendium_id, cookie, done) {
       //debug("Now updating it as user %s with document:\n", cookie, util.inspect(updateMetadata, {color: true, depth: 2}));
 
       request(updateMetadata, (err, res, body) => {
-        debug("Published candidate: %s", JSON.stringify(body));
+        debug("Published candidate: %s", JSON.stringify(body).slice(0, 80));
         done();
       });
     }
