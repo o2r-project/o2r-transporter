@@ -32,6 +32,7 @@ const env = process.env;
 global.test_host = env.TEST_HOST || 'http://localhost:' + config.net.port;
 global.test_host_load = env.TEST_HOST_LOAD || 'http://localhost:8088';
 global.test_host_publish = env.TEST_HOST_PUBLISH || 'http://localhost:8080';
+global.test_job_poll_interval = parseInt(env.TEST_JOB_POLL_INTERVAL) || 3000;
 debug('Testing endpoint at %s with loader at %s and publish via %s', global.test_host, global.test_host_load, global.test_host_publish);
 
 let dbPath = 'localhost/' + config.mongo.database;
