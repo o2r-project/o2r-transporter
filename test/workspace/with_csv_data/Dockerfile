@@ -1,4 +1,8 @@
 FROM alpine
-MAINTAINER <http://o2r.info>
+LABEL maintainer="o2r"
 
-CMD ["echo", "metadata test"]
+WORKDIR /tmp/
+RUN echo "echo '<html>dummy</html>' > display.html" > main.sh
+
+WORKDIR /erc/
+CMD ["sh", "/tmp/main.sh"]

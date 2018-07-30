@@ -20,7 +20,7 @@ const tmp = require('tmp');
 const AdmZip = require('adm-zip');
 const fs = require('fs');
 const debug = require('debug')('transporter:test');
-const util = require('util');
+const AsyncPolling = require('async-polling');
 
 const cookie_plain = 's:yleQfdYnkh-sbj9Ez--_TWHVhXeXNEgq.qRmINNdkRuJ+iHGg5woRa9ydziuJ+DzFG9GnAZRvaaM';
 
@@ -77,17 +77,22 @@ module.exports.publishCandidate = function (compendium_id, cookie, done) {
 
   request(getMetadata, (err, res, body) => {
     if (err) {
-      console.error('error publishing candidate: %s', err);
+      console.error('error publishing candidate: %o', err);
     } else {
       let response = JSON.parse(body);
-      debug("Received metadata for compendium %s: \%s", compendium_id, util.inspect(response, {color: true, depth: null}));
-      updateMetadata.json = { o2r: response.metadata.o2r };
-      debug("Now updating it as user %s with document:\n", cookie, util.inspect(updateMetadata, {color: true, depth: null}));
+      if (response.error) {
+        console.error('error publishing candidate: %s', JSON.stringify(response));
+        throw new Error('Could not publish candidate, aborting test.');
+      } else {
+        //debug("Received metadata for compendium %s: \%s", compendium_id, util.inspect(response, {color: true, depth: 2}));
+        updateMetadata.json = { o2r: response.metadata.o2r };
+        //debug("Now updating it as user %s with document:\n", cookie, util.inspect(updateMetadata, {color: true, depth: 2}));
 
-      request(updateMetadata, (err, res, body) => {
-        debug("Published candidate: %s", JSON.stringify(body));
-        done();
-      });
+        request(updateMetadata, (err, res, body) => {
+          debug("Published candidate: %o", body);
+          done();
+        });
+      }
     }
   });
 }
@@ -110,4 +115,36 @@ module.exports.startJob = function (compendium_id, done) {
     debug("Started job: %s", JSON.stringify(response));
     done(response.job_id);
   });
+}
+
+module.exports.waitForJob = function (job_id, done) {
+  var polling = AsyncPolling(function (end) {
+    request({
+      uri: global.test_host_publish + '/api/v1/job/' + job_id,
+      method: 'GET',
+      timeout: 500
+    }, (err, res, body) => {
+      if (err) end(err, null);
+      else {
+        let response = JSON.parse(body);
+        if (response.status !== 'running') {
+          end(null, response);
+        } else {
+          end(new Error(response.status));
+        }
+      }
+    });
+  }, global.test_job_poll_interval);
+
+  polling.on('error', function (error) {
+    debug("Job %s: %s", job_id, error.message);
+  });
+
+  polling.on('result', function (result) {
+    debug('Job finished with %s', result.status);
+    done(result.status);
+    polling.stop();
+  });
+
+  polling.run();
 }

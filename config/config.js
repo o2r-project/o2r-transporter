@@ -28,7 +28,7 @@ c.api_version = 1;
 
 // network & database
 c.net.port         = env.TRANSPORTER_PORT || 8081;
-c.mongo.location   = env.TRANSPORTER_MONGODB || 'mongodb://localhost/';
+c.mongo.location   = env.TRANSPORTER_MONGODB || 'mongodb://localhost:27017/';
 c.mongo.database = env.TRANSPORTER_MONGODB_DATABASE || 'muncher';
 c.mongo.initial_connection_attempts = 30;
 c.mongo.initial_connection_max_delay = 5000;

@@ -18,16 +18,13 @@
 /* eslint-env mocha */
 const assert = require('chai').assert;
 const request = require('request');
-const fs = require('fs');
-const tmp = require('tmp');
 const tarStream = require('tar-stream');
 const gunzip = require('gunzip-maybe');
-const sleep = require('sleep');
-const path = require('path');
 
 const createCompendiumPostRequest = require('./util').createCompendiumPostRequest;
 const publishCandidate = require('./util').publishCandidate;
 const startJob = require('./util').startJob;
+const waitForJob = require('./util').waitForJob;
 
 require("./setup")
 const cookie = 's:C0LIrsxGtHOGHld8Nv2jedjL4evGgEHo.GMsWD5Vveq0vBt7/4rGeoH5Xx7Dd2pgZR9DvhKCyDTY';
@@ -46,8 +43,9 @@ describe('TAR downloading', function () {
             publishCandidate(compendium_id, cookie, () => {
                 startJob(compendium_id, job_id => {
                     assert.ok(job_id);
-                    sleep.sleep(10);
-                    done();
+                    waitForJob(job_id, (finalStatus) => {
+                        done();
+                    });
                 })
             });
         });

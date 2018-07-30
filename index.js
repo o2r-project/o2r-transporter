@@ -31,7 +31,8 @@ const dbURI = config.mongo.location + config.mongo.database;
 const dbOptions = {
   keepAlive: 30000,
   socketTimeoutMS: 30000,
-  promiseLibrary: global.Promise
+  promiseLibrary: global.Promise,
+  useNewUrlParser: true
 };
 mongoose.connect(dbURI, dbOptions);
 mongoose.connection.on('error', (err) => {

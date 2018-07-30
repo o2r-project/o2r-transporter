@@ -27,7 +27,7 @@ It integrates the now deprecated microservices [`o2r-transportar`](https://githu
 - `TRANSPORTER_PORT`
   Define on which Port muncher should listen. Defaults to `8081`.
 - `TRANSPORTER_MONGODB` __Required__
-  Location for the mongo db. Defaults to `mongodb://localhost/`. You will very likely need to change this.
+  Location for the mongo db. Defaults to `mongodb://localhost:27017/`. You will very likely need to change this.
 - `TRANSPORTER_MONGODB_DATABASE`
   Which database inside the mongo db should be used. Defaults to `muncher`.
 - `TRANSPORTER_BASEPATH`

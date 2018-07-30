@@ -17,7 +17,6 @@
 const assert = require('chai').assert;
 const request = require('request');
 const config = require('../config/config');
-const sleep = require('sleep');
 
 require("./setup")
 const cookie_o2r = 's:C0LIrsxGtHOGHld8Nv2jedjL4evGgEHo.GMsWD5Vveq0vBt7/4rGeoH5Xx7Dd2pgZR9DvhKCyDTY';
@@ -25,6 +24,7 @@ const cookie_o2r = 's:C0LIrsxGtHOGHld8Nv2jedjL4evGgEHo.GMsWD5Vveq0vBt7/4rGeoH5Xx
 const createCompendiumPostRequest = require('./util').createCompendiumPostRequest;
 const startJob = require('./util').startJob;
 const publishCandidate = require('./util').publishCandidate;
+const waitForJob = require('./util').waitForJob;
 
 describe('Basic: accessing payload data of compendia', () => {
   let compendium_data_uri, compendium_id = '';
@@ -167,8 +167,9 @@ describe('Basic: accessing job files', () => {
         startJob(compendium_id, (res) => {
           job_id = res;
           job_data_uri = global.test_host + '/api/v1/job/' + job_id + '/data/';
-          sleep.sleep(10);
-          done();
+          waitForJob(job_id, (finalStatus) => {
+            done();
+          });
         });
       });
     });
@@ -187,7 +188,7 @@ describe('Basic: accessing job files', () => {
       request(job_data_uri + 'display.html', (err, res, body) => {
         assert.ifError(err);
         assert.equal(res.statusCode, 200, "request not successful");
-        assert.include(res.headers, {'content-type': 'text/html; charset=UTF-8', 'content-length': '805400'}, 'returned file has unexpected mime-type or size');
+        assert.include(res.headers, { 'content-type': 'text/html; charset=UTF-8', 'content-length': '19' }, 'returned file has unexpected mime-type or size');
         done();
       });
     });
@@ -196,7 +197,7 @@ describe('Basic: accessing job files', () => {
       request(job_data_uri + 'erc.yml', (err, res, body) => {
         assert.ifError(err);
         assert.equal(res.statusCode, 200, "request not successful");
-        assert.include(res.headers, {'content-type': 'text/yaml; charset=UTF-8', 'content-length': '81'}, 'returned file has unexpected mime-type or size');
+        assert.include(res.headers, { 'content-type': 'text/yaml; charset=UTF-8', 'content-length': '125' }, 'returned file has unexpected mime-type or size');
         done();
       });
     });
@@ -205,16 +206,16 @@ describe('Basic: accessing job files', () => {
       request(job_data_uri + 'main.Rmd', (err, res, body) => {
         assert.ifError(err);
         assert.equal(res.statusCode, 200, "request not successful");
-        assert.include(res.headers, {'content-type': 'application/octet-stream', 'content-length': '4346'}, 'returned file has unexpected mime-type or size');
+        assert.include(res.headers, { 'content-type': 'application/octet-stream', 'content-length': '859' }, 'returned file has unexpected mime-type or size');
         done();
       });
     });
 
     it('should respond with content-type and new size of requested file when passing a query-param \'size\' (.Rmd)', (done) => {
-      request({uri: job_data_uri + 'main.Rmd', qs: { size: 10 } }, (err, res, body) => {
+      request({ uri: job_data_uri + 'main.Rmd', qs: { size: 10 } }, (err, res, body) => {
         assert.ifError(err);
         assert.equal(res.statusCode, 200);
-        assert.include(res.headers, {'content-type': 'application/octet-stream', 'content-length': '279'}, 'returned file was not truncated correctly');
+        assert.include(res.headers, { 'content-type': 'application/octet-stream', 'content-length': '281' }, 'returned file was not truncated correctly');
         done();
       });
     });
@@ -223,16 +224,16 @@ describe('Basic: accessing job files', () => {
       request(job_data_uri + 'data.csv', (err, res, body) => {
         assert.ifError(err);
         assert.equal(res.statusCode, 200, "request not successful");
-        assert.include(res.headers, {'content-type': 'text/csv; charset=UTF-8', 'content-length': '1645'}, 'returned file has unexpected mime-type or size');
+        assert.include(res.headers, { 'content-type': 'text/csv; charset=UTF-8', 'content-length': '1645' }, 'returned file has unexpected mime-type or size');
         done();
       });
     });
 
     it('should respond with content-type and new size of requested file when passing a query-param \'size\' (.csv)', (done) => {
-      request({uri: job_data_uri + 'data.csv', qs: { size: 10 } }, (err, res, body) => {
+      request({ uri: job_data_uri + 'data.csv', qs: { size: 10 } }, (err, res, body) => {
         assert.ifError(err);
         assert.equal(res.statusCode, 200);
-        assert.include(res.headers, {'content-type': 'text/csv; charset=UTF-8', 'content-length': '319'}, 'returned file was not truncated correctly');
+        assert.include(res.headers, { 'content-type': 'text/csv; charset=UTF-8', 'content-length': '319' }, 'returned file was not truncated correctly');
         done();
       });
     });

@@ -60,6 +60,7 @@ function archiveCompendium(archive, compendiumPath, ignoreImage, ignoreMetadataF
 returnError = (res, status, message, timer) => {
   if(timer) timer.stop();
   
+  res.removeHeader('content-disposition'); // response is not a file
   res.setHeader('Content-Type', 'application/json');
   res.status(status).send({ error: message });
 }
