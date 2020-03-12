@@ -4,7 +4,7 @@
 
 Delivery of files from compendia, partial or complete, individual or as an archive - transporter delivers everything.
 
-This microservice implements file download and archive download features of the [o2r web API](http://o2r.info/o2r-web-api).
+This microservice implements file download and archive download features of the [o2r API](https://o2r.info/api).
 It integrates the now deprecated microservices [`o2r-transportar`](https://github.com/o2r-project/o2r-transportar/) and [`o2r-contentbutler`](https://github.com/o2r-project/o2r-contentbutler)
 
 ## o2r web API routes

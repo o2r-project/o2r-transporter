@@ -197,7 +197,7 @@ describe('Basic: accessing job files', () => {
       request(job_data_uri + 'erc.yml', (err, res, body) => {
         assert.ifError(err);
         assert.equal(res.statusCode, 200, "request not successful");
-        assert.include(res.headers, { 'content-type': 'text/yaml; charset=UTF-8', 'content-length': '125' }, 'returned file has unexpected mime-type or size');
+        assert.include(res.headers, { 'content-type': 'text/yaml; charset=UTF-8', 'content-length': '136' }, 'returned file has unexpected mime-type or size');
         done();
       });
     });

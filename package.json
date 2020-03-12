@@ -1,7 +1,7 @@
 {
   "name": "o2r-transporter",
-  "version": "0.6.0",
-  "description": "Node.js implementation of file access endpoints in the [o2r web api](http://o2r.info/o2r-web-api).",
+  "version": "0.7.0",
+  "description": "Node.js implementation of file access endpoints in the [o2r API](https://o2r.info/api).",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -13,41 +13,41 @@
     "type": "git",
     "url": "git+https://github.com/o2r-project/o2r-transporter.git"
   },
-  "author": "o2r project (http://o2r.info)",
+  "author": "o2r project (https://o2r.info)",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/o2r-project/o2r-transporter/issues"
   },
   "homepage": "https://github.com/o2r-project/o2r-transporter#readme",
   "dependencies": {
-    "archiver": "^2.1.1",
+    "archiver": "^3.1.1",
     "backoff": "^2.5.0",
-    "compression": "^1.7.3",
-    "connect-mongodb-session": "^2.0.3",
-    "debug": "^3.1.0",
-    "directory-tree": "^2.1.0",
-    "express": "^4.16.3",
-    "express-session": "^1.15.6",
-    "fs-extra": "^7.0.0",
-    "mimos": "^4.0.0",
-    "mongoose": "^5.2.5",
+    "compression": "^1.7.4",
+    "connect-mongodb-session": "^2.3.1",
+    "debug": "^4.1.1",
+    "directory-tree": "^2.2.4",
+    "express": "^4.17.1",
+    "express-session": "^1.17.0",
+    "fs-extra": "^8.1.0",
+    "@hapi/mimos": "^4.1.1",
+    "mongoose": "^5.9.4",
     "mongoose-timestamp": "^0.6.0",
-    "passport": "^0.4.0",
+    "passport": "^0.4.1",
     "response-time": "^2.3.2",
     "timer-machine": "^1.1.0"
   },
   "devDependencies": {
-    "adm-zip": "^0.4.11",
+    "adm-zip": "^0.4.14",
     "async-polling": "^0.2.1",
-    "chai": "^4.1.2",
+    "chai": "^4.2.0",
     "gunzip-maybe": "^1.4.1",
-    "mocha": "^5.2.0",
-    "mongojs": "^2.6.0",
-    "request": "^2.87.0",
-    "sleep": "^5.1.1",
-    "tar": "^4.4.4",
-    "tar-stream": "^1.6.1",
-    "tmp": "0.0.33",
-    "util": "^0.11.0"
+    "mocha": "^7.1.0",
+    "mongojs": "^3.1.0",
+    "request": "^2.88.2",
+    "sleep": "^6.1.0",
+    "tar": "^6.0.1",
+    "tar-stream": "^2.1.2",
+    "tmp": "0.1.0",
+    "util": "^0.12.2"
   }
 }
