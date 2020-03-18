@@ -1,3 +1,7 @@
+⚠️ Project discontinued ⚠️ See https://github.com/o2r-project/o2r-muncher
+
+------
+
 # o2r-transporter
 
 [![Build Status](https://travis-ci.org/o2r-project/o2r-transporter.svg?branch=master)](https://travis-ci.org/o2r-project/o2r-transporter) [![](https://images.microbadger.com/badges/version/o2rproject/o2r-transporter.svg)](https://microbadger.com/images/o2rproject/o2r-transporter "Get your own version badge on microbadger.com") [![](https://images.microbadger.com/badges/image/o2rproject/o2r-transporter.svg)](https://microbadger.com/images/o2rproject/o2r-transporter "Get your own image badge on microbadger.com") [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
